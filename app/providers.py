@@ -1,11 +1,26 @@
 """Google ADK agents and the required live Parallel Search API integration."""
 import json
 import os
+import re
+from html import unescape
 from datetime import datetime, timezone
 from uuid import uuid4
 
 from .prompts import ASSESSMENT_PROMPT, BREAKDOWN_PROMPT
 from .schemas import Assessment, Breakdown, Source, government_domain, source_url
+
+HTML_ENTITY = re.compile(r"&(?:#\d+|#x[0-9a-fA-F]+|amp|quot|apos|lt|gt);")
+
+
+def decode_html_entities(value):
+    """Decode complete entities emitted by a model without interpreting HTML."""
+    if isinstance(value, str):
+        return HTML_ENTITY.sub(lambda match: unescape(match.group(0)), value)
+    if isinstance(value, list):
+        return [decode_html_entities(item) for item in value]
+    if isinstance(value, dict):
+        return {key: decode_html_entities(item) for key, item in value.items()}
+    return value
 
 
 def gemini_output_schema(model):
@@ -64,7 +79,8 @@ class LiveProvider:
                     raise RuntimeError("The agent returned an error.")
             result_session = await service.get_session(app_name="sceneready", user_id="run", session_id=session.id)
             value = result_session.state.get("structured_result")
-            return schema.model_validate_json(value) if isinstance(value, str) else schema.model_validate(value)
+            value = json.loads(value) if isinstance(value, str) else value
+            return schema.model_validate(decode_html_entities(value))
         finally:
             await runner.close()
 

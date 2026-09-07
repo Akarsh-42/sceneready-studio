@@ -3,12 +3,23 @@ import unittest
 
 from pydantic import ValidationError
 
-from app.providers import gemini_output_schema
+from app.providers import decode_html_entities, gemini_output_schema
 from app.schemas import Assessment, Breakdown
 from test_validation import assessment, breakdown
 
 
 class ProviderSchemaTests(unittest.TestCase):
+    def test_complete_html_entities_are_decoded_recursively(self):
+        value = {"question": "Will the caf&#233; approve A&amp;B?", "items": ["&#x2605;", 2]}
+        self.assertEqual(
+            decode_html_entities(value),
+            {"question": "Will the café approve A&B?", "items": ["★", 2]},
+        )
+
+    def test_incomplete_or_unknown_entities_are_preserved(self):
+        value = "R&D, caf&#233 and &unknown;"
+        self.assertEqual(decode_html_entities(value), value)
+
     def test_schema_preserves_fields_types_enums_and_references(self):
         def compare(original, wire):
             if isinstance(original, list):

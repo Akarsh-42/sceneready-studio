@@ -1,5 +1,17 @@
 # Verification record
 
+## Hosted workflow verification and text correction (2026-09-08)
+
+The user completed two live Cloud Shell workflows and one deployed Cloud Run workflow.
+Both scenarios completed extraction, successful Parallel searches, planning, Python
+validation, review, and export. The second scenario changed location and introduced a
+drone; the workflow selected both relevant searches and reset the previous review.
+
+One model-generated question displayed a numeric HTML entity literally (`caf&#233;`).
+The provider now decodes only complete numeric entities and a small allowlist of common
+named entities before Pydantic validation; the browser continues escaping all rendered
+text. Two regression tests cover decoding and preservation of incomplete/unknown text.
+
 ## Schema compatibility correction (2026-09-07)
 
 The user's Cloud Shell diagnostic passed a basic Gemini request, rejected the
