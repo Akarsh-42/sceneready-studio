@@ -8,6 +8,32 @@ from .prompts import ASSESSMENT_PROMPT, BREAKDOWN_PROMPT
 from .schemas import Assessment, Breakdown, Source, government_domain, source_url
 
 
+def gemini_output_schema(model):
+    """Simplify generation constraints; retain all Pydantic runtime validation."""
+    def simplify(node):
+        if isinstance(node, list):
+            return [simplify(item) for item in node]
+        if not isinstance(node, dict):
+            return node
+        result = {}
+        for key, value in node.items():
+            if key in {"minLength", "maxLength", "minItems", "maxItems", "title"}:
+                continue
+            if key in {"properties", "$defs"}:
+                # Property names such as a task's 'title' are not schema keywords.
+                result[key] = {name: simplify(child) for name, child in value.items()}
+            else:
+                result[key] = simplify(value)
+        return result
+
+    class GeminiOutput(model):
+        @classmethod
+        def model_json_schema(cls, *args, **kwargs):
+            return simplify(super().model_json_schema(*args, **kwargs))
+
+    return GeminiOutput
+
+
 class LiveProvider:
     async def structured(self, name, instruction, schema, payload):
         from google.adk.agents import LlmAgent
@@ -19,7 +45,7 @@ class LiveProvider:
             name=name,
             model=os.environ.get("GEMINI_MODEL", "gemini-3.8-flash"),
             instruction=instruction,
-            output_schema=schema,
+            output_schema=gemini_output_schema(schema),
             output_key="structured_result",
             generate_content_config=types.GenerateContentConfig(
                 max_output_tokens=6000,

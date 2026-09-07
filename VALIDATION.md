@@ -1,5 +1,20 @@
 # Verification record
 
+## Schema compatibility correction (2026-09-07)
+
+The user's Cloud Shell diagnostic passed a basic Gemini request, rejected the
+original Breakdown response schema with HTTP 400, and passed a simplified schema.
+The provider now uses a Pydantic subclass that simplifies only the generated JSON
+schema for both agents. Runtime length constraints and enum validation remain intact.
+Property names (including task title), required fields, and references are preserved.
+
+After this change: 16 local tests passed, including three schema regressions;
+five API tests were skipped because FastAPI/HTTPX were unavailable here. The complete
+patched ADK workflow still requires a live Cloud Shell run. This diagnostic establishes
+schema compatibility as the immediate issue, not which individual constraint caused it.
+
+## Original package checks
+
 Completed in this workspace when preparing this package:
 
 - 13 unit tests PASSED against local Pydantic 2.13.4: input bounds, source URL checks,
