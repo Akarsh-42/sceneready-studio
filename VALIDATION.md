@@ -1,5 +1,18 @@
 # Verification record
 
+## PDF screenplay import implementation (2026-09-08)
+
+SceneReady now accepts `.txt` locally or a PDF of at most 8 MiB through a protected
+endpoint. The PDF path uses Gemini document understanding, treats document instructions
+as untrusted data, returns plain Unicode text, and limits the editable result to 12,000
+characters. SceneReady does not pass PDF bytes to Parallel.
+
+This workspace passed Python compilation, JavaScript syntax checking, and all 18
+dependency-free regression tests. Ten FastAPI tests—including five PDF access, type,
+signature, size, and response tests—were discovered but skipped because FastAPI/HTTPX
+are unavailable in this local verification environment. Run the complete 28-test suite
+in Cloud Shell and complete one real PDF import before claiming the feature in a demo.
+
 ## Hosted workflow verification and text correction (2026-09-08)
 
 The user completed two live Cloud Shell workflows and one deployed Cloud Run workflow.
@@ -50,8 +63,8 @@ Not completed here:
 The version pins in requirements.txt come from the existing Cloud Shell screenshots
 in this conversation, rather than an installation completed in this workspace.
 
-The supplied `scripts/setup.sh` runs all 18 tests in Cloud Shell after installing the
-dependencies and checks the ADK agent constructors with `scripts/check.py`. After
+The supplied `scripts/setup.sh` runs the complete current test suite in Cloud Shell after
+installing the dependencies and checks the ADK agent constructors with `scripts/check.py`. After
 that, run the app and inspect one real live report. A syntactically valid agent is
 not evidence of a successful live model call. Keep these distinctions in the demo
 and submission claims.

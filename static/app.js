@@ -77,11 +77,31 @@ $('empty-example').addEventListener('click',loadExample);
 $('guide-button').addEventListener('click',()=>{$('guide').hidden=!$('guide').hidden;});
 $('script-file').addEventListener('change',async event=>{
   const file=event.target.files[0]; if(!file) return;
-  if(file.size>50000 || !file.name.toLowerCase().endsWith('.txt')) { $('status').textContent='Choose a plain .txt file under 50 KB.'; return; }
-  const text=await file.text();
-  if(text.length>12000){$('status').textContent='The text exceeds 12,000 characters. Use a shorter excerpt.';return;}
-  $('script').value=text;countCharacters();$('status').textContent='Text imported. Review it before building the plan.';
-  event.target.value='';
+  const isPdf=file.type==='application/pdf'||file.name.toLowerCase().endsWith('.pdf');
+  try {
+    if(!isPdf){
+      if(file.size>50000 || !file.name.toLowerCase().endsWith('.txt')) throw new Error('Choose a plain .txt file under 50 KB or a PDF under 8 MiB.');
+      const text=await file.text();
+      if(text.length>12000)throw new Error('The text exceeds 12,000 characters. Use a shorter excerpt.');
+      $('script').value=text;countCharacters();$('status').textContent='Text imported. Review it before building the plan.';
+      return;
+    }
+    if(file.size>8*1024*1024)throw new Error('Choose a PDF under 8 MiB.');
+    const headers={'Content-Type':'application/pdf'};
+    const accessCode=$('access-code').value;
+    if(accessCode)headers.Authorization=`Bearer ${accessCode}`;
+    $('status').textContent='Gemini is extracting the screenplay…';
+    const response=await fetch('/api/extract-document',{method:'POST',headers,body:file});
+    let body={};try{body=await response.json();}catch{}
+    if(!response.ok)throw new Error(typeof body.detail==='string'?body.detail:`PDF extraction failed (${response.status}).`);
+    if(typeof body.text!=='string'||body.text.length<30)throw new Error('The PDF did not contain enough usable screenplay text.');
+    $('script').value=body.text;countCharacters();
+    $('status').textContent=body.truncated?'PDF imported and limited to 12,000 characters. Review the ending before building the plan.':'PDF imported with Gemini. Review the extracted text before building the plan.';
+  } catch(error) {
+    $('status').textContent=error.message;
+  } finally {
+    event.target.value='';
+  }
 });
 function eventReceived(event) {
   if(event.type==='stage') {

@@ -3,7 +3,7 @@ import importlib.util
 import json
 import os
 import unittest
-from unittest.mock import patch
+from unittest.mock import AsyncMock, patch
 
 AVAILABLE = all(importlib.util.find_spec(name) for name in ("fastapi", "httpx"))
 if AVAILABLE:
@@ -51,6 +51,48 @@ class ApiTests(unittest.TestCase):
         response = self.client.get("/api/config")
         self.assertTrue(response.json()["access_required"])
         self.assertNotIn("test-only-code", response.text)
+
+    def test_pdf_import_requires_access_code(self):
+        response = self.client.post(
+            "/api/extract-document", content=b"%PDF-1.7 sample", headers={"Content-Type": "application/pdf"},
+        )
+        self.assertEqual(response.status_code, 401)
+
+    def test_oversized_pdf_is_rejected(self):
+        response = self.client.post(
+            "/api/extract-document", content=b"%PDF-" + b"x" * (8 * 1024 * 1024),
+            headers={**self.headers, "Content-Type": "application/pdf"},
+        )
+        self.assertEqual(response.status_code, 413)
+
+    def test_pdf_import_rejects_wrong_media_type(self):
+        response = self.client.post(
+            "/api/extract-document", content=b"%PDF-1.7 sample",
+            headers={**self.headers, "Content-Type": "text/plain"},
+        )
+        self.assertEqual(response.status_code, 415)
+
+    def test_pdf_import_rejects_invalid_signature(self):
+        response = self.client.post(
+            "/api/extract-document", content=b"not really a PDF",
+            headers={**self.headers, "Content-Type": "application/pdf"},
+        )
+        self.assertEqual(response.status_code, 400)
+
+    def test_pdf_import_returns_bounded_text(self):
+        extracted = "EXT. STREET — DAY\n\nTwo actors cross a quiet street."
+        environment = patch.dict(os.environ, {
+            "SCENEREADY_DEMO": "0", "GOOGLE_CLOUD_PROJECT": "test-project",
+        })
+        provider = patch("app.main.LiveProvider.extract_pdf", new=AsyncMock(return_value=(extracted, False)))
+        with environment, provider:
+            response = self.client.post(
+                "/api/extract-document", content=b"%PDF-1.7 sample",
+                headers={**self.headers, "Content-Type": "application/pdf"},
+            )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["text"], extracted)
+        self.assertFalse(response.json()["truncated"])
 
 
 if __name__ == "__main__":

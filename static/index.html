@@ -22,7 +22,7 @@
     <header class="topbar"><span>WORKSPACE <span class="slash">/</span> PRODUCTION DESK</span><span id="connection" class="pill">Checking connection…</span></header>
     <section class="intro"><div><p class="eyebrow">FROM FIRST DRAFT TO FIRST CALL</p><h1>Make the next scene happen.</h1><p class="lede">Break down the brief. Find the evidence. Give your crew a clear next step.</p></div><div class="intro-stamp"><span>SCENE</span><b>01</b><span>PREPRODUCTION</span></div></section>
     <div id="mode-banner" class="banner" hidden></div>
-    <div id="guide" class="guide" hidden><b>A plan you can inspect.</b><p>Two Gemini agents extract scenes and propose tasks. Python ensures research runs between them and checks quoted evidence. You review the tasks before exporting. Excerpt matches do not establish permission or legal applicability.</p><p>Work stays in this tab. Export your report before closing it. Live runs send your brief to Google and topic queries to Parallel.</p></div>
+    <div id="guide" class="guide" hidden><b>A plan you can inspect.</b><p>Two Gemini agents extract scenes and propose tasks. Python ensures research runs between them and checks quoted evidence. You review the tasks before exporting. Excerpt matches do not establish permission or legal applicability.</p><p>Work stays in this tab. Export your report before closing it. Live runs send your brief—and any PDF you choose to import—to Google. Parallel receives only the generated research queries.</p></div>
     <section class="stats" aria-label="Report summary">
       <div><span>SCENES IDENTIFIED</span><strong id="scene-count">—</strong><small>From your brief</small></div>
       <div><span>SOURCES RETRIEVED</span><strong id="source-count">—</strong><small>Open and inspect each source</small></div>
@@ -38,9 +38,9 @@
             <div class="two-fields"><div><label for="city">Shoot city / region</label><input id="city" name="city" maxlength="100" minlength="2" required placeholder="Mumbai, India"></div><div><label for="crew">Crew size</label><input id="crew" name="crew_size" type="number" min="1" max="500" value="6" required></div></div>
             <label for="location">Exact location <span class="optional">optional</span></label><input id="location" name="location" maxlength="200" placeholder="Street, venue, or landmark">
             <label for="date">Shoot date <span class="optional">optional</span></label><input id="date" name="shoot_date" type="date">
-            <div class="label-line"><label for="script">Script excerpt or production brief</label><label class="upload-link" for="script-file">Import .txt<input id="script-file" type="file" accept=".txt,text/plain" hidden></label></div>
+            <div class="label-line"><label for="script">Script excerpt or production brief</label><label class="upload-link" for="script-file">Import .txt / .pdf<input id="script-file" type="file" accept=".txt,text/plain,.pdf,application/pdf" hidden></label></div>
             <textarea id="script" name="script" minlength="30" maxlength="12000" rows="10" required placeholder="EXT. MUMBAI STREET — NIGHT&#10;&#10;Describe the scene, people, equipment, and any special production needs."></textarea>
-            <div class="input-note"><span>Up to 8 scenes · plain text</span><span id="character-count">0 / 12,000</span></div>
+            <div class="input-note"><span>Up to 8 scenes · text or Gemini-extracted PDF</span><span id="character-count">0 / 12,000</span></div>
             <div id="access-field" hidden><label for="access-code">Studio access code</label><input id="access-code" type="password" autocomplete="off" placeholder="Provided by the studio owner"><small>The code stays in this tab.</small></div>
             <button class="primary" id="run-button" type="submit">Build production plan <span>↗</span></button>
           </fieldset>

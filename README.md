@@ -39,7 +39,8 @@ successful LIVE run in the submission demonstration.
 ## What is implemented
 
 - Responsive production desk with original CSS and no external frontend dependencies.
-- Typed brief input, plain-text file import, eight-scene limit, character and crew bounds.
+- Typed brief input, local `.txt` import, and access-controlled Gemini PDF extraction,
+  with eight-scene, 12,000-character, file-size, and crew bounds.
 - Two Google ADK LlmAgents: script extraction and production planning.
 - Python-controlled ordering: extraction → Parallel research → planning → validation.
 - At most three Parallel Search requests, up to three retrieved results per request,
@@ -59,6 +60,8 @@ successful LIVE run in the submission demonstration.
 ```mermaid
 flowchart TD
   UI[Browser production desk] --> API[FastAPI workflow]
+  PDF[PDF screenplay] --> GeminiDocs[Gemini document extraction]
+  GeminiDocs --> UI
   API --> Extract[ADK extraction agent]
   Extract --> Research[Parallel Search API]
   Research --> Plan[ADK planning agent]
@@ -92,10 +95,12 @@ does NOT autosave or share them. Closing/reloading the page loses that state. Ex
 before closing. Session data is in-memory and short-lived on the server; it is not
 stored in Firestore or Cloud Storage. It is not a multiuser collaboration product yet.
 
-In live mode, Google receives the production brief and research excerpts. Parallel
-receives city/topic search queries; the application does not send the entire script
-to Parallel. Provider retention terms still apply. Use an original sample script for
-the hackathon demo; do not upload confidential studio material without authorization.
+In live mode, Google receives the production brief, research excerpts, and any PDF the
+user explicitly imports. Parallel receives only city/topic search queries; the application
+does not send the entire script or PDF to Parallel. PDF bytes are bounded at 8 MiB and are
+not intentionally logged or stored by SceneReady. Provider retention terms still apply.
+Use an original sample script for the hackathon demo; do not upload confidential studio
+material without authorization.
 
 ## How to assess the result honestly
 
@@ -118,8 +123,9 @@ the hackathon demo; do not upload confidential studio material without authoriza
   Reviewers must verify claims. No readiness score or legal clearance is generated.
 - The three-query cap means some scene topics may remain unresearched. Topics are selected
   by the extraction agent. Check the Run log and treat gaps as unknowns.
-- No PDF parsing, OCR, image/video generation, live weather, cost estimates, or actual
-  permit submissions. Text import is `.txt` only. These are deliberate scope boundaries.
+- PDF import uses Gemini document understanding and requires user review; complex layouts,
+  handwriting, or poor scans may be extracted imperfectly. There is no image/video
+  generation, live weather, cost estimation, or actual permit submission.
 - Reviewer identities are self-entered and not authenticated individually. Review notes
   are editable; this is not a tamper-proof compliance audit trail.
 - Cloud Run startup requires a studio access code. The current code uses a shared secret,
@@ -144,6 +150,8 @@ Confirm the current official requirements before submission. Nothing here guaran
 
 - ADK: https://adk.dev/get-started/python/
 - Structured agent outputs: https://adk.dev/agents/llm-agents/
+- Gemini PDF processing on Vertex AI: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/googlegenaisdk-textgen-with-pdf
+- Google Gen AI Python SDK: https://googleapis.github.io/python-genai/
 - Parallel Search: https://docs.parallel.ai/search/search-quickstart
 - Secret Manager: https://docs.cloud.google.com/secret-manager/docs/access-secret-version
 - Cloud Run secrets: https://docs.cloud.google.com/run/docs/configuring/services/secrets
@@ -155,7 +163,7 @@ Confirm the current official requirements before submission. Nothing here guaran
 
 `app/prompts.py` versioned prompts
 
-`app/providers.py` real Google ADK and Parallel integrations
+`app/providers.py` real Google ADK, Gemini PDF extraction, and Parallel integrations
 
 `app/workflow.py` fixed workflow and streaming events
 

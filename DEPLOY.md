@@ -70,6 +70,8 @@ operational limits, not a billing cap. Configure billing alerts separately.
 - Review/assign a task and download both exports.
 - Confirm changing the input creates a fresh, unreviewed plan.
 - Verify an incorrect access code cannot start research.
+- Import an original PDF under 8 MiB, review the extracted text, and complete a plan.
+- Verify an incorrect access code cannot import a PDF.
 - Confirm there are no credentials or confidential content in the public repository.
 - Check mobile layout in your own browser; browser visual QA was not run here.
 - Record the demo only once the deployed path works as described.

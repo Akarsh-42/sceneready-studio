@@ -1,5 +1,5 @@
 """Versioned prompts. Validation and stage ordering live in Python, not prompts."""
-PROMPT_VERSION = "sceneready-2.0.1"
+PROMPT_VERSION = "sceneready-2.1.0"
 
 BREAKDOWN_PROMPT = """
 You are SceneReady's script breakdown specialist. Return only the required schema.

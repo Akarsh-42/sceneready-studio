@@ -5,8 +5,9 @@ Do not claim measured time savings until you measure them against a manual basel
 
 ## Suggested recording sequence
 
-0:00–0:20 — Explain the bottleneck: a short script becomes scattered location,
-equipment, timing, and review questions. Show the original Mumbai example brief.
+0:00–0:20 — Explain the bottleneck: a screenplay becomes scattered location,
+equipment, timing, and review questions. Import a short original PDF, briefly show the
+extracted editable text, and state that the extraction must be reviewed.
 
 0:20–0:55 — Start a live run. Explain the visible stages and show the actual returned
 scene breakdown. If editing the recording to shorten latency, label that edit and keep
@@ -37,11 +38,11 @@ variants. Do not turn excerpt-match counts into accuracy or readiness percentage
 
 ## Highest-value next work
 
-1. Complete and inspect the live Cloud Shell run.
-2. Fix any specific SDK/API error, then lock the tested environment.
-3. Deploy on Cloud Run and verify judge access.
-4. Measure one manual-versus-assisted workflow with the same brief and a human reviewer.
-5. Finish README, public MIT-licensed repo, and honest three-minute video.
+1. Complete one Cloud Run PDF import with an original two-page screenplay sample.
+2. Verify incorrect or missing studio access codes cannot import a PDF or start research.
+3. Measure one manual-versus-assisted workflow with the same brief and a human reviewer.
+4. Make the MIT-licensed repository public and verify judge access before the deadline.
+5. Record an honest three-minute video with actual outputs and elapsed time visible.
 
 Avoid adding generative video, music, extra partners, speculative budgets, or a second
 agent framework before the core deployed path works. The current scope is a coherent

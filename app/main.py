@@ -18,6 +18,9 @@ from .workflow import run_workflow
 ROOT = Path(__file__).resolve().parent.parent
 logger = logging.getLogger("sceneready")
 slots = asyncio.Semaphore(2)
+document_slots = asyncio.Semaphore(1)
+BRIEF_BODY_LIMIT = 65_536
+PDF_BODY_LIMIT = 8 * 1024 * 1024
 
 
 @asynccontextmanager
@@ -33,16 +36,21 @@ app = FastAPI(title="SceneReady Studio", docs_url=None, redoc_url=None, lifespan
 
 @app.middleware("http")
 async def security(request: Request, call_next):
-    if request.url.path == "/api/run":
+    body_limits = {
+        "/api/run": (BRIEF_BODY_LIMIT, "Brief is too large."),
+        "/api/extract-document": (PDF_BODY_LIMIT, "PDF is too large. Use a file under 8 MiB."),
+    }
+    if request.url.path in body_limits:
         expected = os.environ.get("STUDIO_ACCESS_TOKEN", "")
         supplied = request.headers.get("Authorization", "").removeprefix("Bearer ")
         if expected and not secrets.compare_digest(supplied.encode(), expected.encode()):
             return JSONResponse({"detail": "Enter the studio access code."}, status_code=401)
+        body_limit, body_error = body_limits[request.url.path]
         chunks, size = [], 0
         async for chunk in request.stream():
             size += len(chunk)
-            if size > 65536:
-                return JSONResponse({"detail": "Brief is too large."}, status_code=413)
+            if size > body_limit:
+                return JSONResponse({"detail": body_error}, status_code=413)
             chunks.append(chunk)
         request._body = b"".join(chunks)
     response = await call_next(request)
@@ -71,6 +79,36 @@ async def config():
 @app.get("/healthz")
 async def health():
     return {"status": "ok"}
+
+
+@app.post("/api/extract-document")
+async def extract_document(request: Request):
+    """Extract a bounded, reviewable brief from a screenplay PDF with Gemini."""
+    media_type = request.headers.get("content-type", "").split(";", 1)[0].strip().lower()
+    if media_type != "application/pdf":
+        raise HTTPException(415, "Choose a PDF file.")
+    document = await request.body()
+    if not document.startswith(b"%PDF-"):
+        raise HTTPException(400, "The selected file is not a valid PDF.")
+    if os.environ.get("SCENEREADY_DEMO") == "1":
+        raise HTTPException(503, "PDF extraction requires the live Gemini configuration.")
+    if not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        raise HTTPException(503, "Google Cloud configuration is missing.")
+    try:
+        await asyncio.wait_for(document_slots.acquire(), timeout=0.1)
+    except TimeoutError:
+        raise HTTPException(429, "A PDF is already being processed. Please try again shortly.")
+    try:
+        async with asyncio.timeout(90):
+            text, truncated = await LiveProvider().extract_pdf(document)
+        return {"text": text, "characters": len(text), "truncated": truncated}
+    except Exception as error:
+        status = getattr(error, "status_code", getattr(error, "code", None))
+        status = status if isinstance(status, int) else None
+        logger.warning("document_extraction_failed error_type=%s http_status=%s", type(error).__name__, status)
+        raise HTTPException(502, "Gemini could not extract this PDF. Try a smaller or clearer screenplay PDF.")
+    finally:
+        document_slots.release()
 
 
 @app.post("/api/run")
