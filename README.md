@@ -1,177 +1,217 @@
 # SceneReady Studio
 
-Turn a film scene brief into a reviewable preproduction plan.
+**An evidence-grounded AI preproduction desk for film crews.**
 
-This is the next working version of SceneReady for the Parallel track. It keeps the
-Google Cloud + Gemini + ADK + Parallel integration, adds a professional browser UI,
-and replaces a prompt-only tool choice with a fixed Python workflow.
+SceneReady turns a screenplay or production brief into a structured scene breakdown,
+authoritative location research, and a human-reviewable action board. It is built for
+the **Parallel track** of Google Cloud's Agentic Cinema hackathon.
 
-## Start in Google Cloud Shell
+[Open the live Cloud Run app](https://sceneready-studio-690971413573.us-central1.run.app/) ·
+[Read the demo plan](DEMO_PLAN.md) · [View validation evidence](VALIDATION.md)
 
-Upload and extract this package into a NEW `~/sceneready-studio` folder. Your earlier
-`~/sceneready` terminal agent can stay as it is.
+> The dashboard is public, while Gemini/Parallel requests require the private studio
+> access code. SceneReady provides preliminary planning support—not legal clearance or
+> permission to film.
 
-```bash
-cd ~/sceneready-studio
-bash scripts/setup.sh
-.venv/bin/python scripts/run_local.py
-```
+## The problem
 
-Select **Web Preview > Preview on port 8080** in Cloud Shell. The startup script
-reads `parallel-api-key` from Secret Manager in the selected Google Cloud project.
-No keys are embedded in this package or written to disk by that script.
+A short scene can create dozens of disconnected preproduction questions: Who controls
+the location? Is a drone allowed? Which permit applies? What must the location team verify?
+Crews often research these questions manually, lose the supporting links, and struggle to
+turn findings into accountable next steps.
 
-The setup script creates this project's own virtual environment, installs the
-versions observed in your successful Cloud Shell screenshots, runs dependency and
-validation checks, then checks agent constructors and imports. If it fails, stop and
-inspect that error before starting the app. Do not repeatedly reinstall unrelated tools.
+SceneReady keeps that work in one reviewable flow:
 
-To practice the interface without provider calls:
+1. Read an editable brief or Gemini-extracted PDF screenplay.
+2. Break it into bounded, typed scene data using a Google ADK agent.
+3. Research relevant rules through Parallel Search, prioritising official sources.
+4. Build an actionable production board with a second ADK agent.
+5. Match cited excerpts deterministically in Python before displaying them.
+6. Let a human edit, assign, review, compare revisions, and export the result.
 
-```bash
-.venv/bin/python scripts/run_local.py --demo
-```
+## What is live
 
-Offline rehearsal is prominently labeled and returns illustrative planning tasks,
-with no sources. It is NEVER substituted automatically after a live error. Use a
-successful LIVE run in the submission demonstration.
+| Capability | Implementation |
+|---|---|
+| Screenplay input | Typed brief, local `.txt`, or protected PDF extraction with Gemini document understanding |
+| Agent workflow | Two Google ADK `LlmAgent`s using Gemini on Vertex AI |
+| Partner integration | Parallel Search is imported and called at runtime for authority-focused research |
+| Evidence checks | Source IDs, URLs, excerpts, duplicates, and quotation matches validated in Python |
+| Human review | Edit actions, assign departments, add notes, mark reviewed, and reset reviews on rerun |
+| Provenance | Visible search queries, partial failures, stage timings, source cards, and run mode |
+| Export | Complete JSON provenance plus a readable Markdown production report |
+| Hosting | FastAPI container on Google Cloud Run with Secret Manager-backed credentials |
 
-## What is implemented
+## Product experience
 
-- Premium cinematic production desk with responsive, accessible original CSS and no
-  external frontend dependencies, fonts, trackers, or CDNs.
-- Typed brief input, local `.txt` import, and access-controlled Gemini PDF extraction,
-  with eight-scene, 12,000-character, file-size, and crew bounds.
-- Two Google ADK LlmAgents: script extraction and production planning.
-- Python-controlled ordering: extraction → Parallel research → planning → validation.
-- At most three Parallel Search requests, up to three retrieved results per request,
-  duplicate URLs removed, bounded excerpts, timeouts, and visible partial-research failures.
-- Matching of model quotations to retrieved text. Unknown source IDs and invalid quotes
-  are removed; sources and matching script snippets stay inspectable.
-- Streaming workflow progress, stage timings, actual search query/status log.
-- Department/priority filters, editable action text, owner assignment, notes, and review status.
-- Revision comparison by task title and changed brief fields; reviews reset on every new run.
-- JSON export with complete report/provenance and Markdown export of a readable review pack.
-- Secrets loaded on the server, API access code for Cloud Run, limited concurrent runs,
-  escaped frontend output, response security headers, bounded input, and redacted errors.
-- MIT license, unit tests, setup checks, Dockerfile, and a separate Cloud Run deployment guide.
+- Premium cinematic production desk with responsive, accessible, dependency-free UI.
+- Four visible stages: **Break down → Research → Plan → Validate**.
+- Scene, action-board, evidence, and run-log views in one workspace.
+- Priority and department filters for fast crew handoff.
+- Revision comparison after material brief changes.
+- Clear unknowns and follow-up questions instead of invented certainty.
+- Explicit `LIVE` versus `OFFLINE REHEARSAL` labeling.
 
 ## Architecture
 
 ```mermaid
 flowchart TD
-  UI[Browser production desk] --> API[FastAPI workflow]
-  PDF[PDF screenplay] --> GeminiDocs[Gemini document extraction]
-  GeminiDocs --> UI
-  API --> Extract[ADK extraction agent]
-  Extract --> Research[Parallel Search API]
-  Research --> Plan[ADK planning agent]
-  Plan --> Validate[Python evidence validation]
-  Validate --> UI
-  UI --> Review[Human review and export]
-  Secrets[Secret Manager] --> API
+  Input["Brief, TXT, or PDF"] --> API["FastAPI on Cloud Run"]
+  API --> Extract["Gemini + ADK breakdown agent"]
+  Extract --> Search["Parallel Search"]
+  Search --> Plan["Gemini + ADK planning agent"]
+  Plan --> Verify["Deterministic Python validation"]
+  Verify --> Desk["Human review and export"]
+  Secrets["Secret Manager"] --> API
 ```
 
-The ADK agents use Gemini on Google Cloud via application default credentials.
-The research stage is a direct Parallel API call. There is no external AI provider,
-LangChain dependency, or additional MCP server. A fixed stage order does not make
-model outputs deterministic. Source matching does not prove a claim is correct.
+The stage order and search-call budget are enforced by Python. The models cannot skip
+research, increase the query cap, approve permits, or perform external actions.
 
-## Prompt design
+## Technology
 
-`app/prompts.py` has separately versioned extraction and planning prompts. Structured
-outputs are parsed with Pydantic. The extraction agent identifies only stated details;
-the planning agent returns scoped suggestions and questions with source IDs and short
-verbatim evidence. Script text and retrieved content are explicitly treated as data.
+| Layer | Technology |
+|---|---|
+| Frontend | Original HTML, CSS, and vanilla JavaScript |
+| API | Python 3.12, FastAPI, Pydantic |
+| Agents | Google Agent Development Kit (`google-adk`) |
+| Model | Gemini 3.8 Flash through Vertex AI |
+| Document analysis | Gemini PDF document understanding |
+| Research partner | Parallel Search API (`parallel-web`) |
+| Infrastructure | Cloud Run, Cloud Build, Secret Manager, Artifact Registry |
+| Testing | Python `unittest`, FastAPI test client, syntax and static-interface checks |
 
-Python controls call counts and sequencing, checks quotes and IDs, and assigns the
-initial unreviewed state. It does not rely on an LLM instruction to enforce those gates.
-Prompts reduce instruction-injection risk but do not eliminate it. The agents have no
-tools for executing code, accessing arbitrary secrets, sending messages, or submitting permits.
+There is no Supabase, LangChain, external AI provider, or hidden database. Current project
+and review state lives in the browser and should be exported before closing the tab.
 
-## State and privacy
+## Quick start in Google Cloud Shell
 
-This version keeps the completed report and review changes in browser memory. It
-does NOT autosave or share them. Closing/reloading the page loses that state. Export
-before closing. Session data is in-memory and short-lived on the server; it is not
-stored in Firestore or Cloud Storage. It is not a multiuser collaboration product yet.
+Prerequisites:
 
-In live mode, Google receives the production brief, research excerpts, and any PDF the
-user explicitly imports. Parallel receives only city/topic search queries; the application
-does not send the entire script or PDF to Parallel. PDF bytes are bounded at 8 MiB and are
-not intentionally logged or stored by SceneReady. Provider retention terms still apply.
-Use an original sample script for the hackathon demo; do not upload confidential studio
-material without authorization.
+- A Google Cloud project with Vertex AI enabled and Application Default Credentials.
+- A Secret Manager secret named `parallel-api-key` containing a valid Parallel API key.
+- Python 3.12.
 
-## How to assess the result honestly
+```bash
+git clone https://github.com/Akarsh-42/sceneready-studio.git
+cd sceneready-studio
+bash scripts/setup.sh
+.venv/bin/python scripts/run_local.py
+```
 
-1. Run the supplied Mumbai example in live mode.
-2. Confirm the Run log contains successful Parallel searches.
-3. Open the source URLs and verify task quotes, scope, publication date, and current relevance.
-4. Review an action, assign an owner, and export the report.
-5. Edit the date, location, or a scene detail and rerun. Confirm reviews reset and the
-   comparison describes actual changed input fields. Title-based differences are not
-   a semantic change detector and may reflect model wording.
-6. Use the tests to check missing sources, fabricated quotes, malformed input,
-   duplicate scene IDs, partial failure, and run isolation.
+Select **Web Preview → Preview on port 8080**. The launcher reads the Parallel credential
+from Secret Manager; credentials are not stored in the repository.
 
-## Known limits / next gates
+For a no-cost interface rehearsal with clearly labelled illustrative data:
 
-- This package is an implementation candidate, not a claim of production readiness.
-- Local validation tests and syntax checks are separate from a real SDK/network run.
-  See `VALIDATION.md` for the exact verification completed when this package was produced.
-- A matched quotation can still be irrelevant, misleading, stale, or misinterpreted.
-  Reviewers must verify claims. No readiness score or legal clearance is generated.
-- The three-query cap means some scene topics may remain unresearched. Topics are selected
-  by the extraction agent. Check the Run log and treat gaps as unknowns.
-- PDF import uses Gemini document understanding and requires user review; complex layouts,
-  handwriting, or poor scans may be extracted imperfectly. There is no image/video
-  generation, live weather, cost estimation, or actual permit submission.
-- Reviewer identities are self-entered and not authenticated individually. Review notes
-  are editable; this is not a tamper-proof compliance audit trail.
-- Cloud Run startup requires a studio access code. The current code uses a shared secret,
-  not enterprise SSO. Add individual authentication and durable state before real studio use.
-- Cloud Run max-instance and concurrency settings reduce exposure but are not spending caps.
-- The date field is user-provided. The app does not check availability or book resources.
+```bash
+.venv/bin/python scripts/run_local.py --demo
+```
 
-## Hackathon rules to resolve
+Offline rehearsal is never substituted after a failed live request. Submission evidence
+must come from a successful `LIVE` run.
 
-The supplied Section 7.B limits AI tooling to Google Cloud and the selected partner,
-and names OpenAI among prohibited AI tools. It does not clearly exempt development
-assistants. Obtain organizer clarification on non-Google coding assistance before
-submitting code developed here. This runtime uses only Gemini/ADK and Parallel, but
-runtime compliance alone does not establish development-tool eligibility. Do not
-misrepresent how the project was built.
+## Deploy to Cloud Run
 
-The supplied rules require a hosted web/mobile app, public open-source repository,
-real runtime integrations, and a public English demo of at most three minutes.
-Confirm the current official requirements before submission. Nothing here guarantees a prize.
+The production service is deployed at:
 
-## Official references
+```text
+https://sceneready-studio-690971413573.us-central1.run.app/
+```
 
-- ADK: https://adk.dev/get-started/python/
-- Structured agent outputs: https://adk.dev/agents/llm-agents/
-- Gemini PDF processing on Vertex AI: https://docs.cloud.google.com/vertex-ai/generative-ai/docs/samples/googlegenaisdk-textgen-with-pdf
-- Google Gen AI Python SDK: https://googleapis.github.io/python-genai/
-- Parallel Search: https://docs.parallel.ai/search/search-quickstart
-- Secret Manager: https://docs.cloud.google.com/secret-manager/docs/access-secret-version
-- Cloud Run secrets: https://docs.cloud.google.com/run/docs/configuring/services/secrets
-- Event rules: https://agentic-cinema.devpost.com/rules
+Deployment uses the dedicated `sceneready-runtime` service account and pinned Secret
+Manager versions. Follow [DEPLOY.md](DEPLOY.md) for the reproducible setup and redeploy
+commands. Never commit or record the Parallel key or studio access code.
 
-## Code map
+## API surface
 
-`app/schemas.py` typed input/output and deterministic citation validation
+| Route | Purpose | Protection |
+|---|---|---|
+| `GET /` | Production desk | Public |
+| `GET /healthz` | Container health | Public |
+| `GET /api/config` | Non-secret runtime flags | Public |
+| `POST /api/extract-document` | Gemini PDF extraction | Bearer studio code |
+| `POST /api/run` | Streaming agent workflow | Bearer studio code |
 
-`app/prompts.py` versioned prompts
+`/api/run` streams newline-delimited JSON so the interface can show each real stage as it
+completes. FastAPI and ReDoc documentation routes are disabled in the deployed application.
 
-`app/providers.py` real Google ADK, Gemini PDF extraction, and Parallel integrations
+## Guardrails and privacy
 
-`app/workflow.py` fixed workflow and streaming events
+- No credentials are sent to the browser or committed to source control.
+- Cloud Run refuses to start without a studio code of at least 24 characters.
+- Briefs are limited to 65,536 request bytes; PDFs are limited to 8 MiB.
+- One PDF extraction and two planning workflows may run concurrently per process.
+- Provider error bodies, scripts, PDFs, retrieved excerpts, and credentials are not logged.
+- Security headers include a restrictive Content Security Policy and `no-store` caching.
+- Retrieved text and screenplay content are treated as untrusted data in prompts.
+- Frontend text is escaped; incomplete or unknown HTML entities remain literal.
 
-`app/main.py` API, request limits, access control, and static UI serving
+Google receives the brief, research excerpts, and PDFs explicitly submitted for extraction.
+Parallel receives only bounded city/topic search queries—not the screenplay or PDF. Provider
+retention terms still apply; use only material you are authorised to process.
 
-`static/` dashboard, responsive styling, interaction, review, and exports
+## Evidence discipline
 
-`scripts/` setup, import check, local launch, and deployment
+SceneReady verifies that a displayed quotation exists in a retrieved excerpt. It does **not**
+claim that a source is current, that a quotation proves the generated recommendation, or that
+a permit applies to a particular property. Every task begins unreviewed, and the interface
+reminds crews to open sources and confirm applicability with the responsible authority.
 
-`tests/` validation and orchestration behavior tests without live API calls
+## Verification
+
+The complete Cloud Shell suite passes **28 tests**, covering schema compatibility, API access,
+PDF limits and signatures, input validation, citation matching, fabricated quotation removal,
+duplicate handling, partial research failures, run isolation, and review resets. Successful
+live Cloud Run runs have exercised Gemini, Google ADK, Parallel Search, Python validation,
+review, exports, revision comparison, and protected PDF extraction.
+
+See [VALIDATION.md](VALIDATION.md) for the detailed record and remaining limitations.
+
+## Repository map
+
+```text
+app/
+  main.py         FastAPI routes, limits, access control, and static serving
+  providers.py    Google ADK, Gemini PDF, and Parallel integrations
+  workflow.py     Fixed orchestration and streaming events
+  schemas.py      Typed contracts and deterministic evidence validation
+  prompts.py      Versioned, injection-aware agent prompts
+static/           Production desk UI and browser-side review/export logic
+scripts/          Setup, diagnostics, local launch, and Cloud Run deployment
+tests/            API, provider-schema, workflow, and validation regressions
+```
+
+## Honest limitations
+
+- Browser-only state is not durable or multiuser; export before refreshing or closing.
+- Shared studio-code access is not individual authentication.
+- Evidence matching is not legal verification or source-freshness scoring.
+- The three-query cap intentionally limits cost but can leave topics unresolved.
+- Complex layouts, handwriting, and low-quality PDF scans may extract imperfectly.
+- SceneReady does not submit permits, send messages, make payments, or book resources.
+
+## Roadmap
+
+- Public, read-only verified sample report for judge access without paid calls.
+- Storyboard and mood-board generation with Imagen.
+- Persistent projects and reviews with Firestore.
+- Individual Google authentication and collaborative review history.
+- Production calendar, scheduling, and location-map integration.
+- Voice-based script rehearsal.
+- Stronger source freshness and authority verification.
+
+## Hackathon alignment
+
+SceneReady is a web application newly built for the Parallel track. Google ADK and Gemini run
+the reasoning workflow; Parallel is imported and called at runtime for grounded research;
+Cloud Run and Secret Manager host and protect the experience. The repository contains the
+source, license, tests, setup instructions, and deployment path required to reproduce it.
+
+Official rules: https://agentic-cinema.devpost.com/rules
+
+## Team and license
+
+Created by **Akarsh Mohanty and contributors** for the Google Cloud Agentic Cinema hackathon.
+
+Released under the [MIT License](LICENSE).

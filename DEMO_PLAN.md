@@ -1,49 +1,71 @@
-# A focused three-minute demonstration
+# Three-minute SceneReady demo
 
-Show a real production decision, its supporting evidence, and a human review.
-Do not claim measured time savings until you measure them against a manual baseline.
+## Demo story
 
-## Suggested recording sequence
+Show one realistic preproduction decision from screenplay import to grounded crew action. The
+strongest narrative is a Goa promenade scene with a drone: it creates location, aviation, date,
+and ownership questions that visibly benefit from both Gemini and Parallel.
 
-0:00–0:20 — Explain the bottleneck: a screenplay becomes scattered location,
-equipment, timing, and review questions. Import a short original PDF, briefly show the
-extracted editable text, and state that the extraction must be reviewed.
+## Recording sequence
 
-0:20–0:55 — Start a live run. Explain the visible stages and show the actual returned
-scene breakdown. If editing the recording to shorten latency, label that edit and keep
-the real elapsed time visible in the Run log. Never present offline output as live.
+**0:00–0:20 — Problem and input**
 
-0:55–1:30 — Open a task's evidence, show the exact excerpt and source URL, and explain
-why location/date uncertainty remains. Open a source and verify it before recording.
+“A short scene can trigger scattered permit, safety, and location research. SceneReady converts
+that uncertainty into a reviewable production plan.” Import the original short PDF, show the
+Gemini-extracted editable text, and confirm the form values are consistent:
 
-1:30–2:00 — Assign one task, edit its action, add a review note, and mark it reviewed.
-Explain that human review does not itself confer filming permission.
+- Production: `Skyline Take`
+- Region: `Panaji, Goa, India`
+- Crew: `8`
+- Exact location: `D.B. Road, Panaji`
+- Shoot date: `20-09-2026`
 
-2:00–2:30 — Change one material input (for example, location or shoot date), rerun,
-and show the revision comparison and reset reviews. Do not promise a specific task
-difference until you have observed the live output.
+**0:20–0:55 — Live agent workflow**
 
-2:30–2:50 — Export the review pack and show the actual Google ADK/Gemini and Parallel
-runtime calls in the repository. Mention fixed stage order, capped search calls, and
-the matched-excerpt validator.
+Enter the studio access code off-camera, select **Build production plan**, and show the four real
+stages. Say that Gemini/Google ADK performs breakdown and planning, while Python enforces order,
+timeouts, and the search budget.
 
-2:50–3:00 — State what works and what comes next: individually authenticated review
-and durable shared production state. Give the deployed app and repository links.
+**0:55–1:25 — Partner integration**
 
-## Evidence to collect before making claims
+Open **Run log** and show the actual Parallel queries and success statuses. Then open **Evidence**,
+inspect one official source and its retrieved excerpt, and explain that Parallel receives search
+queries—not the screenplay PDF.
 
-Record real run duration, source count, number of tasks, matched citations, missing
-details identified, and tasks a human corrected. Try at least three original brief
-variants. Do not turn excerpt-match counts into accuracy or readiness percentages.
+**1:25–1:55 — Human decision layer**
 
-## Highest-value next work
+Open one action's **Evidence & verification**, assign it to the location team, improve the action,
+add a short review note, and mark it reviewed. State clearly: reviewed means checked by a person,
+not legally cleared to film.
 
-1. Complete one Cloud Run PDF import with an original two-page screenplay sample.
-2. Verify incorrect or missing studio access codes cannot import a PDF or start research.
-3. Measure one manual-versus-assisted workflow with the same brief and a human reviewer.
-4. Make the MIT-licensed repository public and verify judge access before the deadline.
-5. Record an honest three-minute video with actual outputs and elapsed time visible.
+**1:55–2:25 — Revision awareness**
 
-Avoid adding generative video, music, extra partners, speculative budgets, or a second
-agent framework before the core deployed path works. The current scope is a coherent
-preproduction decision workflow, not an all-purpose filmmaking suite.
+Change one material detail, rerun, and show the revision comparison plus reset review state. Use a
+result already rehearsed before recording; model wording and exact task titles can vary.
+
+**2:25–2:50 — Export and implementation**
+
+Export the Markdown report. Briefly show `app/providers.py` and `app/workflow.py` in GitHub so judges
+can see the actual Google ADK/Gemini and Parallel runtime calls plus deterministic validation.
+
+**2:50–3:00 — Close**
+
+“SceneReady gives production teams a faster, evidence-visible starting point while keeping humans
+responsible for every real-world decision.” Show the live URL and public repository.
+
+## Recording rules
+
+- Keep the final video at or below three minutes and in English or with English subtitles.
+- Use a successful `LIVE` run; never present offline rehearsal as provider-backed output.
+- Do not display the studio code, API keys, Secret Manager values, or private browser tabs.
+- If latency is edited, label the edit and preserve real timing in the Run log.
+- Open and verify every source used in the final recording before filming.
+- Do not claim permits, legal approval, measured accuracy, or time savings without evidence.
+
+## Capture checklist
+
+- Clean desktop recording at 1080p.
+- Browser zoom that keeps input and output visible together.
+- No personal email, billing balance, API key, or unrelated tabs visible.
+- One PDF import, one live run, one Parallel evidence card, one human review, and one export.
+- Final frame includes product name, live URL, repository, Google Cloud, Gemini/ADK, and Parallel.

@@ -1,7 +1,8 @@
-# Deploy only after a successful live Cloud Shell run
+# Reproduce or update the Cloud Run deployment
 
-Do not deploy the ADK development web UI as the production app. This package serves
-its own FastAPI browser application. No deployment has been performed from this chat.
+SceneReady is currently deployed as the Cloud Run service `sceneready-studio` in
+`us-central1`. These instructions reproduce or update that deployment. The production
+artifact is the repository's FastAPI browser application—not the ADK development web UI.
 
 ## 1. Project and runtime identity
 
@@ -46,10 +47,11 @@ export ACCESS_SECRET_VERSION=1
 Use `1` only if that is the correct enabled version. Secret values are injected by
 Cloud Run, not passed on a command line. Pinning versions makes deployment repeatable.
 
-## 3. Deploy
+## 3. Deploy or update
 
 ```bash
 cd ~/sceneready-studio
+git pull --ff-only
 bash scripts/deploy.sh
 ```
 
@@ -63,6 +65,10 @@ Configured limits: one instance, four HTTP requests per instance, at most two ac
 workflows per process, 480-second request timeout, zero minimum instances. These are
 operational limits, not a billing cap. Configure billing alerts separately.
 
+On a newly reconnected Cloud Shell, export the four variables again before invoking the
+script. Secret *values* remain in Secret Manager; only their enabled version numbers are
+used here.
+
 ## 4. Verify the hosted app
 
 - Open the URL, provide the studio access code, and complete a live example.
@@ -73,7 +79,7 @@ operational limits, not a billing cap. Configure billing alerts separately.
 - Import an original PDF under 8 MiB, review the extracted text, and complete a plan.
 - Verify an incorrect access code cannot import a PDF.
 - Confirm there are no credentials or confidential content in the public repository.
-- Check mobile layout in your own browser; browser visual QA was not run here.
+- Check both desktop and mobile-width layouts with a hard refresh after each deployment.
 - Record the demo only once the deployed path works as described.
 
 Official references:

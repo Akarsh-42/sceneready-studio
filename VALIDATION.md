@@ -1,81 +1,87 @@
-# Verification record
+# SceneReady verification record
 
-## Premium interface redesign (2026-09-08)
+Last updated: **2026-09-08**
 
-The interface now uses a cinematic studio visual system with a dark workflow console,
-layered ivory workspace, stronger hierarchy, responsive navigation, clearer focus states,
-reduced-motion support, and elevated task/evidence cards. All existing DOM IDs and API
-behavior are preserved. Python compilation, JavaScript and shell syntax, CSS brace checks,
-unique-ID checks, and JavaScript-to-HTML element checks passed in this workspace.
+This document separates checks that were actually completed from claims that still require
+human or production validation.
 
-## PDF screenplay import implementation (2026-09-08)
+## Current verified state
 
-SceneReady now accepts `.txt` locally or a PDF of at most 8 MiB through a protected
-endpoint. The PDF path uses Gemini document understanding, treats document instructions
-as untrusted data, returns plain Unicode text, and limits the editable result to 12,000
-characters. SceneReady does not pass PDF bytes to Parallel.
+- Cloud Run service `sceneready-studio` is deployed in `us-central1` and serves the public UI.
+- Revision `sceneready-studio-00002-7wg` was deployed with 100% of traffic after the premium
+  interface update.
+- The complete Cloud Shell suite passed: **28 tests in 0.125 seconds**.
+- `scripts/check.py` passed agent constructors, model configuration, Parallel import, and API routes.
+- Multiple `LIVE` workflows completed all four stages against real Gemini and Parallel services.
+- A protected PDF screenplay was extracted with Gemini and used in a completed planning run.
+- The app detected intentionally conflicting city, date, and crew details instead of silently
+  merging them.
+- Task review, ownership, notes, evidence inspection, JSON export, Markdown export, and review
+  resets on rerun were exercised in the browser.
 
-This workspace passed Python compilation, JavaScript syntax checking, and all 18
-dependency-free regression tests. Ten FastAPI tests—including five PDF access, type,
-signature, size, and response tests—were discovered but skipped because FastAPI/HTTPX
-are unavailable in this local verification environment. Run the complete 28-test suite
-in Cloud Shell and complete one real PDF import before claiming the feature in a demo.
+## Regression coverage
 
-## Hosted workflow verification and text correction (2026-09-08)
+The test suite covers:
 
-The user completed two live Cloud Shell workflows and one deployed Cloud Run workflow.
-Both scenarios completed extraction, successful Parallel searches, planning, Python
-validation, review, and export. The second scenario changed location and introduced a
-drone; the workflow selected both relevant searches and reset the previous review.
+- brief length, crew-size, date, and URL bounds;
+- source domain classification and duplicate URL removal;
+- valid excerpt matching and fabricated/whitespace-only quotation removal;
+- unknown source and scene-reference removal;
+- mandatory bounded research and visible partial-search failures;
+- duplicate scene-ID rejection and fresh review state per run;
+- explicit offline mode with no automatic fallback after a live error;
+- Gemini-compatible generated JSON schemas with full Pydantic runtime validation;
+- safe numeric/common HTML-entity decoding while preserving unknown entities;
+- protected PDF access, content type, signature, size, and response behavior;
+- protected workflow routes and stable API configuration behavior.
 
-One model-generated question displayed a numeric HTML entity literally (`caf&#233;`).
-The provider now decodes only complete numeric entities and a small allowlist of common
-named entities before Pydantic validation; the browser continues escaping all rendered
-text. Two regression tests cover decoding and preservation of incomplete/unknown text.
+## Static and build checks
 
-## Schema compatibility correction (2026-09-07)
+- All Python source files compile successfully.
+- `node --check static/app.js` passes.
+- Bash syntax checks pass for setup and deployment scripts.
+- CSS braces are balanced.
+- HTML IDs are unique and JavaScript element references resolve.
+- Credential scanning found no committed API keys or studio access codes.
+- The Dockerfile successfully built and deployed through Cloud Build.
 
-The user's Cloud Shell diagnostic passed a basic Gemini request, rejected the
-original Breakdown response schema with HTTP 400, and passed a simplified schema.
-The provider now uses a Pydantic subclass that simplifies only the generated JSON
-schema for both agents. Runtime length constraints and enum validation remain intact.
-Property names (including task title), required fields, and references are preserved.
+## Live integration evidence
 
-After this change: 16 local tests passed, including three schema regressions;
-five API tests were skipped because FastAPI/HTTPX were unavailable here. The complete
-patched ADK workflow still requires a live Cloud Shell run. This diagnostic establishes
-schema compatibility as the immediate issue, not which individual constraint caused it.
+Observed live runs included:
 
-## Original package checks
+- Gemini/ADK screenplay breakdown;
+- authority-focused Parallel Search queries with successful results;
+- Gemini/ADK production planning;
+- deterministic Python citation validation;
+- source, excerpt, warning, and stage-timing display;
+- completed plans in approximately 15–24 seconds during observed runs.
 
-Completed in this workspace when preparing this package:
+Timings and model outputs vary. These observations are not a latency guarantee or an accuracy score.
 
-- 13 unit tests PASSED against local Pydantic 2.13.4: input bounds, source URL checks,
-  citation matching, fabricated and whitespace-only quote rejection, unknown source
-  and scene handling, mandatory bounded research, deduplication, partial research
-  failure, duplicate scene rejection, explicit offline mode, and fresh review state.
-- All Python source files compiled successfully.
-- `node --check static/app.js` passed.
-- Bash syntax checks passed for setup and deployment scripts.
-- Static UI checks passed: 48 unique IDs, 3 local asset references present, and all
-  42 literal JavaScript element references matched existing IDs.
+## Security behavior verified by implementation and tests
 
-Not completed here:
+- Paid endpoints require a bearer studio access code when configured.
+- The Cloud Run process rejects a production start with an access code shorter than 24 characters.
+- Parallel and access credentials are supplied through Secret Manager.
+- Request sizes, workflow concurrency, PDF concurrency, and timeouts are bounded.
+- Error responses expose error type/status only—not provider bodies or user content.
+- Static responses use a restrictive Content Security Policy and related security headers.
 
-- 5 API tests were SKIPPED because FastAPI/HTTPX were unavailable in this workspace.
-- The attempted dependency installation could not run because network approval was
-  cancelled. Cloud SDK imports and agent construction could not be tested here.
-- No authenticated Google or Parallel call was made from this workspace.
-- No browser visual QA, Cloud Run build/deployment, or judge-access test was performed.
+## Claims intentionally not made
 
-The version pins in requirements.txt come from the existing Cloud Shell screenshots
-in this conversation, rather than an installation completed in this workspace.
+- A matched quotation is not proof that advice is current, complete, or legally applicable.
+- A human `Reviewed` marker is not filming clearance.
+- SceneReady has not measured legal accuracy or guaranteed production time savings.
+- No permit was submitted, payment made, resource booked, or authority contacted.
+- Browser state is not a durable or tamper-proof audit trail.
+- Shared studio-code access is not individual user authentication.
 
-The supplied `scripts/setup.sh` runs the complete current test suite in Cloud Shell after
-installing the dependencies and checks the ADK agent constructors with `scripts/check.py`. After
-that, run the app and inspect one real live report. A syntactically valid agent is
-not evidence of a successful live model call. Keep these distinctions in the demo
-and submission claims.
+## Final pre-submission checks
 
-The earlier combined connection test shown by the user successfully used Secret
-Manager, Parallel, and Gemini. That does not verify this new app end to end.
+- Run one clean, internally consistent PDF example on the deployed URL.
+- Open every source shown in the recorded demo and confirm its current relevance.
+- Verify missing and incorrect studio codes cannot call either protected endpoint.
+- Test the final deployed revision on desktop and mobile widths.
+- Confirm repository visibility, license, and teammate access from a signed-out browser.
+- Record a public English demo of no more than three minutes.
+- Keep secrets, private scripts, and confidential production material out of the recording/repository.
