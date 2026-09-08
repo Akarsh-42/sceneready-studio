@@ -25,7 +25,7 @@ function renderTasks() {
   return tasks.map(t => `<article class="task-card"><div class="task-top">${tags(t)}<span class="task-id">${esc(t.id)}</span></div><h3>${esc(t.title)}</h3><p class="action">${esc(t.edited_action || t.action)}</p><p>${esc(t.rationale)}</p><details><summary>Evidence & verification</summary>${t.citations.length ? t.citations.map(citationHTML).join('') : '<p>No matching source excerpt supports this task. Treat it as a planning suggestion or an unresolved question.</p>'}<p><b>Verify:</b> ${esc(t.needs_verification)}</p>${t.edited_action ? '<p>The action was edited by a reviewer; source citations belong to the original generated task.</p>' : ''}</details>${t.review_note ? `<p><b>Review note:</b> ${esc(t.review_note)}</p>` : ''}<div class="task-bottom"><span>${esc(t.scene_ids.join(', ') || 'Production-wide')} · ${esc(t.owner || t.department)}</span><button class="secondary" data-review="${esc(t.id)}">${t.review_status === 'reviewed' ? 'Edit review' : 'Review & assign'} ↗</button></div></article>`).join('');
 }
 function renderScenes() {
-  return `<div class="scene-card"><p>${esc(report.breakdown.summary)}</p></div>` + report.breakdown.scenes.map(s=>`<article class="scene-card"><div class="tags"><span class="tag">${esc(s.id)}</span><span class="tag">${esc(s.setting)}</span><span class="tag">${esc(s.time_of_day)}</span></div><h3>${esc(s.heading)}</h3>${s.script_excerpt ? `<blockquote>${esc(s.script_excerpt)}</blockquote>` : '<p>No matching script excerpt. Review this extraction.</p>'}<div class="scene-grid"><div><b>People</b><p>${esc(s.people.join(', ') || 'Not specified')}</p></div><div><b>Equipment</b><p>${esc(s.equipment.join(', ') || 'Not specified')}</p></div></div><p><b>Production needs:</b> ${esc(s.production_needs.join(' · ') || 'Not specified')}</p></article>`).join('');
+  return `<div class="scene-card"><p>${esc(report.breakdown.summary)}</p></div>` + report.breakdown.scenes.map(s=>`<article class="scene-card"><div class="tags"><span class="tag">${esc(s.id)}</span><span class="tag">${esc(s.setting)}</span><span class="tag">${esc(s.time_of_day)}</span></div><h3>${esc(s.heading)}</h3>${s.script_excerpt ? `<blockquote>${esc(s.script_excerpt)}</blockquote>` : '<p>No matching script excerpt. Review this extraction.</p>'}<div class="scene-grid"><div><b>People</b><p>${esc(s.people.join(', ') || 'Not specified')}</p></div><div><b>Equipment</b><p>${esc(s.equipment.join(', ') || 'Not specified')}</p></div></div><p><b>Production needs:</b> ${esc(s.production_needs.join(' · ') || 'Not specified')}</p>${storyboardHTML(s)}</article>`).join('');
 }
 function renderSources() {
   if (!report.sources.length) return '<div class="empty-state"><h3>No evidence to inspect yet.</h3><p>This run returned no usable sources. Requirements remain unknown.</p></div>';
@@ -184,3 +184,67 @@ async function initialize(){
   }catch{$('connection').textContent='Server unavailable';$('status').textContent='The app server is unavailable. Check the terminal running SceneReady.';}
 }
 initialize();
+
+let storyboardBusy = false;
+function storyboardHTML(scene) {
+  const board = (report.storyboards || {})[scene.id];
+  const disabled = storyboardBusy || report.mode !== 'live' || !scene.script_excerpt || controller;
+  return `<section class="storyboard"><div class="storyboard-controls"><label>Frames
+    <select data-shot-count="${esc(scene.id)}" ${disabled ? 'disabled' : ''}><option>2</option><option selected>3</option><option>4</option></select></label>
+    <button class="secondary" data-storyboard="${esc(scene.id)}" ${disabled || board ? 'disabled' : ''}>🎬 Generate Storyboard</button></div>
+    <p class="fineprint">Gemini plans coverage, then renders each shot. Uses Google image-generation credits. Creative interpretation; visual details may vary. Download frames before closing.</p>
+    ${board ? `<p role="status" aria-live="polite">${esc(board.status)}</p>
+    ${board.plan ? `<details><summary>Shared visual continuity & assumptions</summary><p>${esc(board.plan.continuity)}</p><ul>${board.plan.assumptions.map(a=>`<li>${esc(a)}</li>`).join('')}</ul></details>
+    <div class="storyboard-gallery">${board.plan.shots.map((shot,i)=>{
+      const frame=board.frames[i+1];
+      return `<figure class="storyboard-frame">${frame?.image ? `<a href="${esc(frame.image)}" download="storyboard-${esc(scene.id)}-${i+1}.png"><img src="${esc(frame.image)}" alt="Shot ${i+1}: ${esc(shot.description)}"></a>` : `<div class="storyboard-placeholder">${esc(frame?.error || 'Waiting for frame…')}</div>`}
+      <figcaption><span class="tag">Shot ${i+1} · ${esc(shot.shot_type)}</span><p><b>${esc(shot.camera)}</b></p><p>${esc(shot.description)}</p>${frame?.image ? '<small>Click image to download</small>' : ''}</figcaption></figure>`;
+    }).join('')}</div>` : ''}` : ''}</section>`;
+}
+$('report-content').addEventListener('click', async event => {
+  const button = event.target.closest('[data-storyboard]');
+  if (!button || !report || storyboardBusy || controller) return;
+  const targetReport = report;
+  const scene = targetReport.breakdown.scenes.find(s=>s.id===button.dataset.storyboard);
+  if (!scene) return;
+  const select = button.parentElement.querySelector('select');
+  const count = Number(select.value);
+  targetReport.storyboards ||= {};
+  if (targetReport.storyboards[scene.id]) return;
+  const board = {status:'Starting shot planning…',frames:{},plan:null};
+  targetReport.storyboards[scene.id] = board;
+  storyboardBusy = true;
+  const refresh = ()=>{if(report===targetReport && !controller)render();};
+  refresh();
+  let complete = false;
+  try {
+    const headers = {'Content-Type':'application/json'};
+    if($('access-code').value)headers.Authorization=`Bearer ${$('access-code').value}`;
+    const response = await fetch('/api/storyboard',{method:'POST',headers,body:JSON.stringify({scene,shot_count:count})});
+    if(!response.ok){const body=await response.json();throw new Error(typeof body.detail==='string'?body.detail:`Storyboard request failed (${response.status}).`);}
+    const reader=response.body.getReader(),decoder=new TextDecoder();let buffer='';
+    const consume=line=>{
+      if(!line.trim())return;
+      const item=JSON.parse(line);
+      if(item.type==='error')throw new Error(item.message);
+      if(item.type==='status')board.status=item.message;
+      if(item.type==='plan')board.plan=item.plan;
+      if(item.type==='frame'){
+        if(!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/=]+$/.test(item.image))throw new Error('Invalid frame format.');
+        board.frames[item.number]={image:item.image};
+      }
+      if(item.type==='frame_error')board.frames[item.number]={error:item.message};
+      if(item.type==='complete'){complete=true;board.status=`${item.successful}/${item.total} frames rendered. AI-generated concept storyboard.`;}
+      refresh();
+    };
+    while(true){const {done,value}=await reader.read();if(done)break;buffer+=decoder.decode(value,{stream:true});let n;while((n=buffer.indexOf('\n'))>=0){consume(buffer.slice(0,n));buffer=buffer.slice(n+1);}}
+    consume(buffer+decoder.decode());
+    if(!complete)throw new Error('Connection ended. Completed frames remain available.');
+  } catch(error) {board.status=error.message;} finally {
+    storyboardBusy=false;
+    // Retry is allowed only before any plan exists, avoiding accidental duplicate image charges.
+    if(!board.plan){delete targetReport.storyboards[scene.id];$('status').textContent=board.status;}
+    else for(let i=1;i<=board.plan.shots.length;i++)board.frames[i] ||= {error:'Frame was not completed.'};
+    refresh();
+  }
+});

@@ -14,11 +14,13 @@ from .demo import DemoProvider
 from .providers import LiveProvider
 from .schemas import Brief
 from .workflow import run_workflow
+from .storyboard import StoryboardRequest, StoryboardProvider, generate_storyboard
 
 ROOT = Path(__file__).resolve().parent.parent
 logger = logging.getLogger("sceneready")
 slots = asyncio.Semaphore(2)
 document_slots = asyncio.Semaphore(1)
+storyboard_slots = asyncio.Semaphore(1)
 BRIEF_BODY_LIMIT = 65_536
 PDF_BODY_LIMIT = 8 * 1024 * 1024
 
@@ -37,6 +39,7 @@ app = FastAPI(title="SceneReady Studio", docs_url=None, redoc_url=None, lifespan
 @app.middleware("http")
 async def security(request: Request, call_next):
     body_limits = {
+        "/api/storyboard": (BRIEF_BODY_LIMIT, "Scene is too large."),
         "/api/run": (BRIEF_BODY_LIMIT, "Brief is too large."),
         "/api/extract-document": (PDF_BODY_LIMIT, "PDF is too large. Use a file under 8 MiB."),
     }
@@ -139,6 +142,34 @@ async def run(brief: Brief, request: Request):
         finally:
             slots.release()
     return StreamingResponse(stream(), media_type="application/x-ndjson", headers={"X-Accel-Buffering": "no"})
+
+
+@app.post("/api/storyboard")
+async def storyboard(payload: StoryboardRequest, request: Request):
+    if os.environ.get("SCENEREADY_DEMO") == "1":
+        raise HTTPException(503, "Storyboards require a live scene and Google configuration.")
+    if not os.environ.get("GOOGLE_CLOUD_PROJECT"):
+        raise HTTPException(503, "Google Cloud configuration is missing.")
+    if not payload.scene.script_excerpt.strip():
+        raise HTTPException(422, "This scene has no verified script excerpt. Run the breakdown again.")
+    try:
+        await asyncio.wait_for(storyboard_slots.acquire(), timeout=0.1)
+    except TimeoutError:
+        raise HTTPException(429, "A storyboard is already being generated. Try again shortly.")
+
+    async def stream():
+        try:
+            async with asyncio.timeout(380):
+                async for event in generate_storyboard(payload, StoryboardProvider()):
+                    if await request.is_disconnected():
+                        break
+                    yield json.dumps(event) + "\n"
+        except Exception as error:
+            logger.warning("storyboard_failed error_type=%s", type(error).__name__)
+            yield json.dumps({"type": "error", "message": "Storyboard stopped. Check Google model access or try again. Completed frames remain available."}) + "\n"
+        finally:
+            storyboard_slots.release()
+    return StreamingResponse(stream(), media_type="application/x-ndjson")
 
 
 app.mount("/static", StaticFiles(directory=ROOT / "static"), name="static")

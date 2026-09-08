@@ -44,6 +44,10 @@ SceneReady keeps that work in one reviewable flow:
 
 ## Product experience
 
+- Per-scene **Generate Storyboard**: Gemini plans 2–4 shots, then Google image generation
+  renders reference-conditioned frames with camera metadata. See [STORYBOARDS.md](STORYBOARDS.md)
+  for setup, usage, and live-validation status.
+
 - Premium cinematic production desk with responsive, accessible, dependency-free UI.
 - Four visible stages: **Break down → Research → Plan → Validate**.
 - Scene, action-board, evidence, and run-log views in one workspace.
