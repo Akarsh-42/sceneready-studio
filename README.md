@@ -38,7 +38,8 @@ successful LIVE run in the submission demonstration.
 
 ## What is implemented
 
-- Responsive production desk with original CSS and no external frontend dependencies.
+- Premium cinematic production desk with responsive, accessible original CSS and no
+  external frontend dependencies, fonts, trackers, or CDNs.
 - Typed brief input, local `.txt` import, and access-controlled Gemini PDF extraction,
   with eight-scene, 12,000-character, file-size, and crew bounds.
 - Two Google ADK LlmAgents: script extraction and production planning.

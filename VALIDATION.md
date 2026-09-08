@@ -1,5 +1,13 @@
 # Verification record
 
+## Premium interface redesign (2026-09-08)
+
+The interface now uses a cinematic studio visual system with a dark workflow console,
+layered ivory workspace, stronger hierarchy, responsive navigation, clearer focus states,
+reduced-motion support, and elevated task/evidence cards. All existing DOM IDs and API
+behavior are preserved. Python compilation, JavaScript and shell syntax, CSS brace checks,
+unique-ID checks, and JavaScript-to-HTML element checks passed in this workspace.
+
 ## PDF screenplay import implementation (2026-09-08)
 
 SceneReady now accepts `.txt` locally or a PDF of at most 8 MiB through a protected
