@@ -10,7 +10,7 @@ human or production validation.
 - Cloud Run service `sceneready-studio` is deployed in `us-central1` and serves the public UI.
 - A deployed revision completed live planning and storyboard generation; the new demo-readiness
   changes in this commit still require redeployment and a fresh-browser check.
-- The previous local suite passed: **37 tests**; GitHub Actions must verify the updated **39-test** suite.
+- GitHub Actions passed the updated **39-test** suite, JavaScript and shell syntax checks, Python compilation, and dependency audit.
 - `scripts/check.py` passed agent constructors, model configuration, Parallel import, and API routes.
 - Multiple `LIVE` workflows completed all four stages against real Gemini and Parallel services.
 - A protected PDF screenplay was extracted with Gemini and used in a completed planning run.
