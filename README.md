@@ -1,5 +1,7 @@
 # SceneReady Studio
 
+[![CI](https://github.com/Akarsh-42/sceneready-studio/actions/workflows/ci.yml/badge.svg)](https://github.com/Akarsh-42/sceneready-studio/actions/workflows/ci.yml)
+
 **An evidence-grounded AI preproduction desk for film crews.**
 
 SceneReady turns a screenplay or production brief into a structured scene breakdown,
@@ -38,8 +40,9 @@ SceneReady keeps that work in one reviewable flow:
 | Partner integration | Parallel Search is imported and called at runtime for authority-focused research |
 | Evidence checks | Source IDs, URLs, excerpts, duplicates, and quotation matches validated in Python |
 | Human review | Edit actions, assign departments, add notes, mark reviewed, and reset reviews on rerun |
-| Provenance | Visible search queries, partial failures, stage timings, source cards, and run mode |
-| Export | Complete JSON provenance plus a readable Markdown production report |
+| Provenance | Live stage timers, visible search queries, partial failures, source cards, and run mode |
+| Export | Complete JSON, Markdown, and browser-generated full-report PDF |
+| Session recovery | Completed reports and review edits restore locally without storing access codes or storyboard images |
 | Hosting | FastAPI container on Google Cloud Run with Secret Manager-backed credentials |
 
 ## Product experience
@@ -49,7 +52,7 @@ SceneReady keeps that work in one reviewable flow:
   for setup, usage, and live-validation status.
 
 - Premium cinematic production desk with responsive, accessible, dependency-free UI.
-- Four visible stages: **Break down → Research → Plan → Validate**.
+- Sticky four-stage progress with real elapsed timers: **Break down → Research → Plan → Validate**.
 - Scene, action-board, evidence, and run-log views in one workspace.
 - Priority and department filters for fast crew handoff.
 - Revision comparison after material brief changes.
@@ -85,8 +88,9 @@ research, increase the query cap, approve permits, or perform external actions.
 | Infrastructure | Cloud Run, Cloud Build, Secret Manager, Artifact Registry |
 | Testing | Python `unittest`, FastAPI test client, syntax and static-interface checks |
 
-There is no Supabase, LangChain, external AI provider, or hidden database. Current project
-and review state lives in the browser and should be exported before closing the tab.
+There is no Supabase, LangChain, external AI provider, or hidden database. Completed reports
+and review edits are stored only in the user's browser for refresh recovery; exports remain
+the portable copy. Access codes and generated storyboard images are never persisted there.
 
 ## Quick start in Google Cloud Shell
 
@@ -136,6 +140,7 @@ commands. Never commit or record the Parallel key or studio access code.
 | `GET /api/config` | Non-secret runtime flags | Public |
 | `POST /api/extract-document` | Gemini PDF extraction | Bearer studio code |
 | `POST /api/run` | Streaming agent workflow | Bearer studio code |
+| `POST /api/storyboard` | Structured shot planning and image rendering | Bearer studio code |
 
 `/api/run` streams newline-delimited JSON so the interface can show each real stage as it
 completes. FastAPI and ReDoc documentation routes are disabled in the deployed application.
@@ -164,9 +169,10 @@ reminds crews to open sources and confirm applicability with the responsible aut
 
 ## Verification
 
-The complete Cloud Shell suite passes **28 tests**, covering schema compatibility, API access,
+The complete suite passes **37 tests**, covering schema compatibility, API access,
 PDF limits and signatures, input validation, citation matching, fabricated quotation removal,
-duplicate handling, partial research failures, run isolation, and review resets. Successful
+duplicate handling, partial research failures, run isolation, review resets, storyboard
+sequencing, session-safety contracts, progress instrumentation and full-report printing. Successful
 live Cloud Run runs have exercised Gemini, Google ADK, Parallel Search, Python validation,
 review, exports, revision comparison, and protected PDF extraction.
 
@@ -184,11 +190,13 @@ app/
 static/           Production desk UI and browser-side review/export logic
 scripts/          Setup, diagnostics, local launch, and Cloud Run deployment
 tests/            API, provider-schema, workflow, and validation regressions
+FEATURE_BACKLOG.md Evidence-based feature priorities and submission gate
 ```
 
 ## Honest limitations
 
-- Browser-only state is not durable or multiuser; export before refreshing or closing.
+- Browser recovery is device-local, user-clearable, and not a durable or multiuser audit trail.
+- Storyboard images must be downloaded before refresh; they are intentionally excluded from browser storage.
 - Shared studio-code access is not individual authentication.
 - Evidence matching is not legal verification or source-freshness scoring.
 - The three-query cap intentionally limits cost but can leave topics unresolved.
@@ -198,7 +206,7 @@ tests/            API, provider-schema, workflow, and validation regressions
 ## Roadmap
 
 - Public, read-only verified sample report for judge access without paid calls.
-- Storyboard and mood-board generation with Imagen.
+- Stronger visual differentiation between planned storyboard shot types.
 - Persistent projects and reviews with Firestore.
 - Individual Google authentication and collaborative review history.
 - Production calendar, scheduling, and location-map integration.

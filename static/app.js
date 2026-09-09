@@ -2,6 +2,10 @@
 const $ = id => document.getElementById(id);
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let report = null, previous = null, activeTab = 'tasks', controller = null, reviewing = null;
+const SESSION_KEY = 'sceneready.session.v1';
+const STAGES = ['breakdown','research','planning','validation'];
+let workflowStartedAt = 0, clockTimer = null;
+const stageStartedAt = new Map();
 const example = 'EXT. MUMBAI STREET — NIGHT\n\nA courier leaves a small café and walks down the pavement. Two adult actors cross paths under a streetlight.\n\nProduction notes: six crew members, one handheld camera, two battery-powered LED lights. No drone, no stunts, no road closure, no minors, and no animals. Exact street, shoot date, and location permission are not yet confirmed.';
 function loadExample() {
   $('title').value = 'The Last Local'; $('city').value = 'Mumbai, India'; $('crew').value = '6';
@@ -18,11 +22,14 @@ function tags(task) {
   return `<div class="tags"><span class="tag ${task.priority === 'high' ? 'high' : ''}">${esc(task.priority)} priority</span><span class="tag">${esc(task.department)}</span><span class="tag ${task.evidence_status === 'excerpt_matched' ? 'matched' : ''}">${task.evidence_status === 'excerpt_matched' ? 'Excerpt matched' : 'Needs evidence'}</span>${task.review_status === 'reviewed' ? '<span class="tag reviewed">Reviewed</span>' : ''}</div>`;
 }
 function citationHTML(c) { return `<div class="citations">${safeLink(c.url,c.title)}<blockquote>“${esc(c.quote)}”</blockquote></div>`; }
+function taskCards(tasks) {
+  return tasks.map(t => `<article class="task-card"><div class="task-top">${tags(t)}<span class="task-id">${esc(t.id)}</span></div><h3>${esc(t.title)}</h3><p class="action">${esc(t.edited_action || t.action)}</p><p>${esc(t.rationale)}</p><details><summary>Evidence & verification</summary>${t.citations.length ? t.citations.map(citationHTML).join('') : '<p>No matching source excerpt supports this task. Treat it as a planning suggestion or an unresolved question.</p>'}<p><b>Verify:</b> ${esc(t.needs_verification)}</p>${t.edited_action ? '<p>The action was edited by a reviewer; source citations belong to the original generated task.</p>' : ''}</details>${t.review_note ? `<p><b>Review note:</b> ${esc(t.review_note)}</p>` : ''}<div class="task-bottom"><span>${esc(t.scene_ids.join(', ') || 'Production-wide')} · ${esc(t.owner || t.department)}</span><button class="secondary" data-review="${esc(t.id)}">${t.review_status === 'reviewed' ? 'Edit review' : 'Review & assign'} ↗</button></div></article>`).join('');
+}
 function renderTasks() {
   const filter = $('task-filter').value;
   const tasks = report.tasks.filter(t => filter === 'all' || t.review_status === filter || t.priority === filter || t.evidence_status === filter);
   if (!tasks.length) return '<div class="empty-state"><h3>No tasks in this view.</h3><p>Choose another filter to see the rest of the plan.</p></div>';
-  return tasks.map(t => `<article class="task-card"><div class="task-top">${tags(t)}<span class="task-id">${esc(t.id)}</span></div><h3>${esc(t.title)}</h3><p class="action">${esc(t.edited_action || t.action)}</p><p>${esc(t.rationale)}</p><details><summary>Evidence & verification</summary>${t.citations.length ? t.citations.map(citationHTML).join('') : '<p>No matching source excerpt supports this task. Treat it as a planning suggestion or an unresolved question.</p>'}<p><b>Verify:</b> ${esc(t.needs_verification)}</p>${t.edited_action ? '<p>The action was edited by a reviewer; source citations belong to the original generated task.</p>' : ''}</details>${t.review_note ? `<p><b>Review note:</b> ${esc(t.review_note)}</p>` : ''}<div class="task-bottom"><span>${esc(t.scene_ids.join(', ') || 'Production-wide')} · ${esc(t.owner || t.department)}</span><button class="secondary" data-review="${esc(t.id)}">${t.review_status === 'reviewed' ? 'Edit review' : 'Review & assign'} ↗</button></div></article>`).join('');
+  return taskCards(tasks);
 }
 function renderScenes() {
   return `<div class="scene-card"><p>${esc(report.breakdown.summary)}</p></div>` + report.breakdown.scenes.map(s=>`<article class="scene-card"><div class="tags"><span class="tag">${esc(s.id)}</span><span class="tag">${esc(s.setting)}</span><span class="tag">${esc(s.time_of_day)}</span></div><h3>${esc(s.heading)}</h3>${s.script_excerpt ? `<blockquote>${esc(s.script_excerpt)}</blockquote>` : '<p>No matching script excerpt. Review this extraction.</p>'}<div class="scene-grid"><div><b>People</b><p>${esc(s.people.join(', ') || 'Not specified')}</p></div><div><b>Equipment</b><p>${esc(s.equipment.join(', ') || 'Not specified')}</p></div></div><p><b>Production needs:</b> ${esc(s.production_needs.join(' · ') || 'Not specified')}</p>${storyboardHTML(s)}</article>`).join('');
@@ -49,7 +56,44 @@ function render() {
   const questions = [...new Set([...report.breakdown.missing_details,...report.questions])];
   $('questions').hidden = !questions.length;
   $('questions').innerHTML = `<span class="eyebrow">BEFORE THE NEXT TAKE</span><h3>A few details will make this sharper.</h3><ul>${questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul><p class="fineprint">Update the brief and run it again. Each new plan requires a fresh review.</p>`;
-  $('export-json').disabled = false; $('export-md').disabled = false;
+  $('export-json').disabled = false; $('export-md').disabled = false; $('export-pdf').disabled = false;
+}
+function currentBriefFields() {
+  return {title:$('title').value,city:$('city').value,crew:$('crew').value,location:$('location').value,date:$('date').value,script:$('script').value};
+}
+function reportForStorage(value) {
+  if (!value) return null;
+  const copy = JSON.parse(JSON.stringify(value));
+  // Generated frames are large data URLs. Users must download them explicitly.
+  delete copy.storyboards;
+  return copy;
+}
+function persistSession() {
+  if (!report) return;
+  try {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({version:1,saved_at:new Date().toISOString(),brief:currentBriefFields(),report:reportForStorage(report),access_code_was_entered:Boolean($('access-code').value)}));
+    $('session-banner').hidden=false;
+    $('session-message').textContent='This completed report and its review edits are saved in this browser. Studio codes and storyboard images are never stored.';
+  } catch {
+    $('session-banner').hidden=false;
+    $('session-message').textContent='This browser could not save the current report. Export a portable copy.';
+  }
+}
+function validStoredReport(value) {
+  return value && typeof value==='object' && typeof value.run_id==='string' && value.brief && value.breakdown && Array.isArray(value.breakdown.scenes) && Array.isArray(value.sources) && Array.isArray(value.tasks) && Array.isArray(value.trace);
+}
+function restoreSession() {
+  let saved;
+  try { saved=JSON.parse(localStorage.getItem(SESSION_KEY)); } catch { return; }
+  if (!saved || saved.version!==1 || !validStoredReport(saved.report)) return;
+  const brief=saved.brief||{};
+  for(const [id,key] of [['title','title'],['city','city'],['crew','crew'],['location','location'],['date','date'],['script','script']])if(typeof brief[key]==='string')$(id).value=brief[key];
+  countCharacters(); report=saved.report; activeTab='tasks'; render();
+  STAGES.forEach(stage=>{const node=document.querySelector(`[data-stage="${stage}"]`);if(node){node.className='complete';node.querySelector('span').textContent='✓';const trace=report.trace.find(item=>item.stage===stage);node.querySelector('[data-stage-time]').textContent=trace?`${trace.seconds}s`:'done';}});
+  $('run-time').textContent=`Saved run · ${report.elapsed_seconds}s`;
+  $('status').textContent='Restored a saved browser copy. Review source currency before relying on it.';
+  $('session-banner').hidden=false;
+  $('session-message').textContent=`Restored run ${report.run_id} saved ${new Date(saved.saved_at).toLocaleString()}.${saved.access_code_was_entered?' Enter the studio access code again for paid actions.':''} Storyboard images are not stored.`;
 }
 function compareRuns() {
   $('comparison').hidden = !previous;
@@ -103,22 +147,45 @@ $('script-file').addEventListener('change',async event=>{
     event.target.value='';
   }
 });
+const secondsSince=value=>((performance.now()-value)/1000).toFixed(1);
+function stopRunClock() { if(clockTimer)clearInterval(clockTimer);clockTimer=null; }
+function startRunClock() {
+  stopRunClock(); workflowStartedAt=performance.now(); stageStartedAt.clear();
+  clockTimer=setInterval(()=>{
+    $('run-time').textContent=`Run ${secondsSince(workflowStartedAt)}s`;
+    for(const [stage,started] of stageStartedAt){const node=document.querySelector(`[data-stage="${stage}"].running [data-stage-time]`);if(node)node.textContent=`${secondsSince(started)}s`;}
+  },100);
+}
+function resetProgress() {
+  stopRunClock(); stageStartedAt.clear();
+  document.querySelectorAll('[data-stage]').forEach((node,index)=>{node.className='';node.querySelector('span').textContent=String(index+1);node.querySelector('[data-stage-time]').textContent='—';});
+}
 function eventReceived(event) {
   if(event.type==='stage') {
     const node=document.querySelector(`[data-stage="${event.stage}"]`);
-    if(node) node.className=event.status;
+    if(node && event.status==='running'){
+      node.className='running';stageStartedAt.set(event.stage,performance.now());node.querySelector('[data-stage-time]').textContent='0.0s';
+    }
+    if(node && event.status==='complete'){
+      node.className='complete';node.querySelector('span').textContent='✓';
+      const started=stageStartedAt.get(event.stage);node.querySelector('[data-stage-time]').textContent=started?`${secondsSince(started)}s`:'done';stageStartedAt.delete(event.stage);
+    }
     $('status').textContent=`${event.stage.charAt(0).toUpperCase()+event.stage.slice(1)}: ${event.status === 'running' ? 'in progress…' : 'complete'}`;
   }
   if(event.type==='research') $('status').textContent=`Research ${event.completed}/${event.total}: ${event.status.replaceAll('_',' ')}`;
   if(event.type==='error') throw new Error(event.message);
-  if(event.type==='result') { previous=report;report=event.report;render();compareRuns();$('run-time').textContent=`Completed in ${report.elapsed_seconds}s`;$('status').textContent='Plan created. Review the actions and evidence before using it.'; }
+  if(event.type==='result') {
+    stopRunClock();previous=report;report=event.report;render();compareRuns();
+    for(const trace of report.trace){const node=document.querySelector(`[data-stage="${trace.stage}"]`);if(node)node.querySelector('[data-stage-time]').textContent=`${trace.seconds}s`;}
+    $('run-time').textContent=`Completed in ${report.elapsed_seconds}s`;$('status').textContent='Plan created. Review the actions and evidence before using it.';persistSession();
+  }
 }
 $('brief-form').addEventListener('submit',async event=>{
   event.preventDefault();if(controller) return;
   const brief={title:$('title').value,city:$('city').value,crew_size:Number($('crew').value),location:$('location').value,shoot_date:$('date').value||null,script:$('script').value};
   controller=new AbortController();$('brief-fields').disabled=true;$('example-button').disabled=true;$('cancel-button').hidden=false;
-  $('export-json').disabled=true;$('export-md').disabled=true;$('task-toolbar').hidden=true;$('questions').hidden=true;$('warning-box').hidden=true;$('comparison').hidden=true;
-  document.querySelectorAll('[data-stage]').forEach(n=>n.className='');
+  $('export-json').disabled=true;$('export-md').disabled=true;$('export-pdf').disabled=true;$('task-toolbar').hidden=true;$('questions').hidden=true;$('warning-box').hidden=true;$('comparison').hidden=true;
+  resetProgress();startRunClock();
   document.querySelectorAll('[data-tab]').forEach(n=>n.disabled=true);
   $('report-content').innerHTML='<div class="empty-state"><div class="empty-icon">◷</div><h3>Your production desk is at work.</h3><p>The live stages above show what is happening.<br>A completed plan appears after validation.</p></div>';
   $('status').textContent='Starting the workflow…';$('run-time').textContent='Run in progress';
@@ -137,7 +204,7 @@ $('brief-form').addEventListener('submit',async event=>{
   } catch(error) {
     controller.abort();
     const message=error.name==='AbortError'?'Run cancelled. Provider work already started may still incur usage.':error.message;
-    $('status').textContent=message+(report?' Showing the last completed report.':'');$('run-time').textContent='Run not completed';
+    stopRunClock();$('status').textContent=message+(report?' Showing the last completed report.':'');$('run-time').textContent='Run not completed';
     document.querySelectorAll('[data-stage].running').forEach(n=>n.className='failed');
     if(report){render();compareRuns();}else $('report-content').innerHTML=`<div class="empty-state"><h3>This run needs another take.</h3><p>${esc(message)}</p><p>Your brief is still available on the left.</p></div>`;
   } finally {
@@ -161,7 +228,7 @@ $('review-form').addEventListener('submit',event=>{
   reviewing.edited_action=edited===reviewing.action?'':edited;
   reviewing.owner=$('review-owner').value.trim();reviewing.review_note=$('review-note').value.trim();
   reviewing.review_status=$('review-checked').checked?'reviewed':'open';reviewing.reviewed_at=new Date().toISOString();
-  $('review-dialog').close();render();
+  $('review-dialog').close();render();persistSession();
 });
 $('review-action').addEventListener('input',()=>$('review-action').setCustomValidity(''));
 function download(content,extension,type){const blob=new Blob([content],{type});const a=document.createElement('a');const url=URL.createObjectURL(blob);a.href=url;a.download=`sceneready-${report.run_id}.${extension}`;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}
@@ -177,13 +244,27 @@ $('export-md').addEventListener('click',()=>{
   lines.push('## Source register','');for(const s of report.sources)lines.push(`${md(s.id)}: ${md(s.title)}`,md(s.url),`Retrieved: ${s.retrieved_at}. Publication date and applicability not verified.`,'');
   lines.push('## Open questions','',...[...new Set([...report.breakdown.missing_details,...report.questions])].map(q=>`- ${md(q)}`),'','## Run notes','',...report.warnings.map(w=>`- ${md(w)}`),'','## Stage timings','',...report.trace.map(t=>`- ${t.stage}: ${t.seconds}s`));download(lines.join('\n'),'md','text/markdown');
 });
+function fullReportHTML() {
+  const questions=[...new Set([...report.breakdown.missing_details,...report.questions])];
+  return `<header class="print-heading"><p class="eyebrow">SCENEREADY · FULL PRODUCTION REPORT</p><h1>${esc(report.brief.title)}</h1><p>${esc(report.brief.city)} · ${esc(report.brief.location||'Location not confirmed')} · ${esc(report.brief.shoot_date||'Date not confirmed')} · Crew ${esc(report.brief.crew_size)}</p><p>Run ${esc(report.run_id)} · ${esc(report.created_at)} · ${esc(report.mode.replaceAll('_',' '))}</p><p>${esc(report.notice)}</p></header>
+  <section class="print-section"><h2>Scene breakdown</h2>${renderScenes()}</section>
+  <section class="print-section"><h2>Actions to review</h2>${taskCards(report.tasks)}</section>
+  <section class="print-section"><h2>Evidence register</h2>${renderSources()}</section>
+  ${questions.length?`<section class="print-section"><h2>Open questions</h2><ul>${questions.map(q=>`<li>${esc(q)}</li>`).join('')}</ul></section>`:''}
+  <section class="print-section"><h2>Run log</h2>${renderTrace()}</section>`;
+}
+$('export-pdf').addEventListener('click',()=>{
+  if(!report)return;
+  $('print-report').innerHTML=fullReportHTML();document.body.classList.add('printing-full-report');
+  window.print();document.body.classList.remove('printing-full-report');$('print-report').innerHTML='';
+});
+$('clear-session').addEventListener('click',()=>{try{localStorage.removeItem(SESSION_KEY);}catch{}location.reload();});
 async function initialize(){
   try{const response=await fetch('/api/config');if(!response.ok)throw new Error();const config=await response.json();$('connection').textContent=config.demo?'Offline rehearsal':config.configured?'Live research configured':'Setup needed';$('access-field').hidden=!config.access_required;
     if(config.demo){$('mode-banner').hidden=false;$('mode-banner').textContent='OFFLINE REHEARSAL — interface practice only. No Gemini or Parallel calls are made; output is illustrative and has no external evidence.';}
     else if(!config.configured){$('mode-banner').hidden=false;$('mode-banner').textContent='Live credentials are not loaded. Start the app with scripts/run_local.py before running a plan.';}
   }catch{$('connection').textContent='Server unavailable';$('status').textContent='The app server is unavailable. Check the terminal running SceneReady.';}
 }
-initialize();
 
 let storyboardBusy = false;
 function storyboardHTML(scene) {
@@ -248,3 +329,5 @@ $('report-content').addEventListener('click', async event => {
     refresh();
   }
 });
+restoreSession();
+initialize();

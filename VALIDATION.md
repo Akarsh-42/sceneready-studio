@@ -1,6 +1,6 @@
 # SceneReady verification record
 
-Last updated: **2026-09-08**
+Last updated: **2026-09-09**
 
 This document separates checks that were actually completed from claims that still require
 human or production validation.
@@ -8,9 +8,9 @@ human or production validation.
 ## Current verified state
 
 - Cloud Run service `sceneready-studio` is deployed in `us-central1` and serves the public UI.
-- Revision `sceneready-studio-00002-7wg` was deployed with 100% of traffic after the premium
-  interface update.
-- The complete Cloud Shell suite passed: **28 tests in 0.125 seconds**.
+- A deployed revision completed live planning and storyboard generation; the new demo-readiness
+  changes in this commit still require redeployment and a fresh-browser check.
+- The complete local suite passed: **37 tests**.
 - `scripts/check.py` passed agent constructors, model configuration, Parallel import, and API routes.
 - Multiple `LIVE` workflows completed all four stages against real Gemini and Parallel services.
 - A protected PDF screenplay was extracted with Gemini and used in a completed planning run.
@@ -18,6 +18,7 @@ human or production validation.
   merging them.
 - Task review, ownership, notes, evidence inspection, JSON export, Markdown export, and review
   resets on rerun were exercised in the browser.
+- A live scene storyboard produced two structured, visually continuous generated frames.
 
 ## Regression coverage
 
@@ -34,6 +35,10 @@ The test suite covers:
 - safe numeric/common HTML-entity decoding while preserving unknown entities;
 - protected PDF access, content type, signature, size, and response behavior;
 - protected workflow routes and stable API configuration behavior.
+- structured storyboard planning before image generation, bounded shot counts, partial rendering
+  failures, protected access and cross-frame reference reuse;
+- static contracts for four stage timers, browser restore secret exclusions, clear controls and
+  full-report browser printing.
 
 ## Static and build checks
 
@@ -44,6 +49,8 @@ The test suite covers:
 - HTML IDs are unique and JavaScript element references resolve.
 - Credential scanning found no committed API keys or studio access codes.
 - The Dockerfile successfully built and deployed through Cloud Build.
+- GitHub Actions now repeats Python tests, JavaScript and shell syntax checks, Python compilation,
+  and a dependency audit on pushes and pull requests.
 
 ## Live integration evidence
 
@@ -74,6 +81,7 @@ Timings and model outputs vary. These observations are not a latency guarantee o
 - SceneReady has not measured legal accuracy or guaranteed production time savings.
 - No permit was submitted, payment made, resource booked, or authority contacted.
 - Browser state is not a durable or tamper-proof audit trail.
+- Restored browser data may be stale or locally modified; storyboard image data is not persisted.
 - Shared studio-code access is not individual user authentication.
 
 ## Final pre-submission checks
@@ -82,6 +90,7 @@ Timings and model outputs vary. These observations are not a latency guarantee o
 - Open every source shown in the recorded demo and confirm its current relevance.
 - Verify missing and incorrect studio codes cannot call either protected endpoint.
 - Test the final deployed revision on desktop and mobile widths.
+- Exercise refresh restore, Clear saved work, and Print / Save PDF after the final deployment.
 - Confirm repository visibility, license, and teammate access from a signed-out browser.
 - Record a public English demo of no more than three minutes.
 - Keep secrets, private scripts, and confidential production material out of the recording/repository.
