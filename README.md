@@ -43,6 +43,7 @@ SceneReady keeps that work in one reviewable flow:
 | Provenance | Live stage timers, visible search queries, partial failures, source cards, and run mode |
 | Export | Complete JSON, Markdown, and browser-generated full-report PDF |
 | Session recovery | Completed reports and review edits restore locally without storing access codes or storyboard images |
+| Operations | Privacy-safe JSON events for run IDs, stages, durations, counts, and redacted failures |
 | Hosting | FastAPI container on Google Cloud Run with Secret Manager-backed credentials |
 
 ## Product experience
@@ -151,7 +152,8 @@ completes. FastAPI and ReDoc documentation routes are disabled in the deployed a
 - Cloud Run refuses to start without a studio code of at least 24 characters.
 - Briefs are limited to 65,536 request bytes; PDFs are limited to 8 MiB.
 - One PDF extraction and two planning workflows may run concurrently per process.
-- Provider error bodies, scripts, PDFs, retrieved excerpts, and credentials are not logged.
+- Provider error bodies, scripts, PDFs, retrieved excerpts, search queries, and credentials are not logged.
+- Operational logs use an allowlist containing only IDs, stage/topic names, timings, counts, statuses, and redacted error metadata.
 - Security headers include a restrictive Content Security Policy and `no-store` caching.
 - Retrieved text and screenplay content are treated as untrusted data in prompts.
 - Frontend text is escaped; incomplete or unknown HTML entities remain literal.
@@ -169,7 +171,7 @@ reminds crews to open sources and confirm applicability with the responsible aut
 
 ## Verification
 
-The complete suite passes **37 tests**, covering schema compatibility, API access,
+The complete suite passes **39 tests**, covering schema compatibility, API access,
 PDF limits and signatures, input validation, citation matching, fabricated quotation removal,
 duplicate handling, partial research failures, run isolation, review resets, storyboard
 sequencing, session-safety contracts, progress instrumentation and full-report printing. Successful
@@ -183,6 +185,7 @@ See [VALIDATION.md](VALIDATION.md) for the detailed record and remaining limitat
 ```text
 app/
   main.py         FastAPI routes, limits, access control, and static serving
+  observability.py Privacy-safe JSON operational event allowlist
   providers.py    Google ADK, Gemini PDF, and Parallel integrations
   workflow.py     Fixed orchestration and streaming events
   schemas.py      Typed contracts and deterministic evidence validation

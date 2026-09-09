@@ -1,23 +1,24 @@
 import asyncio
 import json
-import logging
 import os
 import secrets
+import time
 from contextlib import asynccontextmanager
 from pathlib import Path
+from uuid import uuid4
 
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from .demo import DemoProvider
+from .observability import log_event
 from .providers import LiveProvider
 from .schemas import Brief
 from .workflow import run_workflow
 from .storyboard import StoryboardRequest, StoryboardProvider, generate_storyboard
 
 ROOT = Path(__file__).resolve().parent.parent
-logger = logging.getLogger("sceneready")
 slots = asyncio.Semaphore(2)
 document_slots = asyncio.Semaphore(1)
 storyboard_slots = asyncio.Semaphore(1)
@@ -101,14 +102,30 @@ async def extract_document(request: Request):
         await asyncio.wait_for(document_slots.acquire(), timeout=0.1)
     except TimeoutError:
         raise HTTPException(429, "A PDF is already being processed. Please try again shortly.")
+    operation_id, started = uuid4().hex[:12], time.monotonic()
+    log_event("document_extraction_started", operation_id=operation_id, bytes=len(document))
     try:
         async with asyncio.timeout(90):
             text, truncated = await LiveProvider().extract_pdf(document)
+        log_event(
+            "document_extraction_completed",
+            operation_id=operation_id,
+            seconds=round(time.monotonic() - started, 3),
+            bytes=len(document),
+            truncated=truncated,
+        )
         return {"text": text, "characters": len(text), "truncated": truncated}
     except Exception as error:
         status = getattr(error, "status_code", getattr(error, "code", None))
         status = status if isinstance(status, int) else None
-        logger.warning("document_extraction_failed error_type=%s http_status=%s", type(error).__name__, status)
+        log_event(
+            "document_extraction_failed",
+            severity="warning",
+            operation_id=operation_id,
+            seconds=round(time.monotonic() - started, 3),
+            error_type=type(error).__name__,
+            http_status=status,
+        )
         raise HTTPException(502, "Gemini could not extract this PDF. Try a smaller or clearer screenplay PDF.")
     finally:
         document_slots.release()
@@ -124,19 +141,29 @@ async def run(brief: Brief, request: Request):
     except TimeoutError:
         raise HTTPException(429, "Two runs are already active. Please try again shortly.")
 
+    run_id = uuid4().hex[:12]
+
     async def stream():
         try:
             async with asyncio.timeout(420):
                 provider = DemoProvider() if demo else LiveProvider()
-                async for event in run_workflow(brief, provider, demo=demo):
+                async for event in run_workflow(brief, provider, demo=demo, run_id=run_id):
                     if await request.is_disconnected():
+                        log_event("run_disconnected", severity="warning", run_id=run_id)
                         break
                     yield json.dumps(event, ensure_ascii=False) + "\n"
         except Exception as error:
-            # Do not log uploaded scripts, retrieved text, credentials, or provider error bodies.
+            # The field allowlist keeps scripts, excerpts, credentials, queries,
+            # and provider error bodies out of logs.
             status = getattr(error, "status_code", getattr(error, "code", None))
             status = status if isinstance(status, int) else None
-            logger.warning("workflow_failed error_type=%s http_status=%s", type(error).__name__, status)
+            log_event(
+                "run_failed",
+                severity="warning",
+                run_id=run_id,
+                error_type=type(error).__name__,
+                http_status=status,
+            )
             detail = f"{type(error).__name__}" + (f", HTTP {status}" if status else "")
             yield json.dumps({"type": "error", "message": f"Run stopped ({detail}). No completed report was created. Check server configuration or try again."}) + "\n"
         finally:
@@ -157,15 +184,33 @@ async def storyboard(payload: StoryboardRequest, request: Request):
     except TimeoutError:
         raise HTTPException(429, "A storyboard is already being generated. Try again shortly.")
 
+    operation_id, started = uuid4().hex[:12], time.monotonic()
+    log_event("storyboard_started", operation_id=operation_id, total_frames=payload.shot_count)
+
     async def stream():
         try:
             async with asyncio.timeout(380):
                 async for event in generate_storyboard(payload, StoryboardProvider()):
                     if await request.is_disconnected():
+                        log_event("storyboard_disconnected", severity="warning", operation_id=operation_id)
                         break
+                    if event.get("type") == "complete":
+                        log_event(
+                            "storyboard_completed",
+                            operation_id=operation_id,
+                            seconds=round(time.monotonic() - started, 3),
+                            successful_frames=event.get("successful"),
+                            total_frames=event.get("total"),
+                        )
                     yield json.dumps(event) + "\n"
         except Exception as error:
-            logger.warning("storyboard_failed error_type=%s", type(error).__name__)
+            log_event(
+                "storyboard_failed",
+                severity="warning",
+                operation_id=operation_id,
+                seconds=round(time.monotonic() - started, 3),
+                error_type=type(error).__name__,
+            )
             yield json.dumps({"type": "error", "message": "Storyboard stopped. Check Google model access or try again. Completed frames remain available."}) + "\n"
         finally:
             storyboard_slots.release()

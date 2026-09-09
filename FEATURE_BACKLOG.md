@@ -14,6 +14,8 @@ Status: `idea` → `planned` → `in-progress` → `shipped` / `rejected`.
 - Human task editing, assignment, notes, review state, revision comparison, JSON and Markdown export.
 - Gemini PDF extraction and per-scene structured storyboard planning plus Google image generation.
 - Protected paid routes, bounded request sizes/concurrency/timeouts, Cloud Run and Secret Manager.
+- Privacy-safe JSON operational events for run/stage IDs, durations, counts and redacted
+  failures; sensitive content is rejected by an explicit field allowlist.
 
 ## Tier 1 — demo readiness
 
@@ -88,7 +90,7 @@ Firestore is valuable only if collaborative history is demonstrated.
 ## Tier 3 — after the submission path is secure
 
 - Multi-day scheduling and a genuine call-sheet data model.
-- Structured Cloud Logging with run/stage IDs and durations, excluding scripts, excerpts and secrets.
+- Cloud Logging dashboards or alerts built on the shipped JSON application events.
 - Brief templates for common production patterns.
 - Stronger storyboard shot differentiation while retaining cross-frame continuity.
 - Source publication-date, freshness and authority review tools.

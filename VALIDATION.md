@@ -10,7 +10,7 @@ human or production validation.
 - Cloud Run service `sceneready-studio` is deployed in `us-central1` and serves the public UI.
 - A deployed revision completed live planning and storyboard generation; the new demo-readiness
   changes in this commit still require redeployment and a fresh-browser check.
-- The complete local suite passed: **37 tests**.
+- The previous local suite passed: **37 tests**; GitHub Actions must verify the updated **39-test** suite.
 - `scripts/check.py` passed agent constructors, model configuration, Parallel import, and API routes.
 - Multiple `LIVE` workflows completed all four stages against real Gemini and Parallel services.
 - A protected PDF screenplay was extracted with Gemini and used in a completed planning run.
@@ -38,7 +38,9 @@ The test suite covers:
 - structured storyboard planning before image generation, bounded shot counts, partial rendering
   failures, protected access and cross-frame reference reuse;
 - static contracts for four stage timers, browser restore secret exclusions, clear controls and
-  full-report browser printing.
+  full-report browser printing;
+- structured log events retain approved operational metadata while dropping scripts, search
+  queries, access codes and provider bodies.
 
 ## Static and build checks
 
@@ -86,6 +88,9 @@ Timings and model outputs vary. These observations are not a latency guarantee o
 
 ## Final pre-submission checks
 
+- After redeployment, complete one protected workflow and inspect Cloud Run Logs Explorer for
+  `run_started`, four `stage_completed` events and `run_completed`; confirm no screenplay
+  text, access code, search query or retrieved excerpt appears.
 - Run one clean, internally consistent PDF example on the deployed URL.
 - Open every source shown in the recorded demo and confirm its current relevance.
 - Verify missing and incorrect studio codes cannot call either protected endpoint.
