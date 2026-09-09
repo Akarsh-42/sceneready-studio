@@ -9,6 +9,7 @@ authoritative location research, and a human-reviewable action board. It is buil
 the **Parallel track** of Google Cloud's Agentic Cinema hackathon.
 
 [Open the live Cloud Run app](https://sceneready-studio-690971413573.us-central1.run.app/) ·
+[Explore the redacted judge sample](https://sceneready-studio-690971413573.us-central1.run.app/sample) ·
 [Read the demo plan](DEMO_PLAN.md) · [View validation evidence](VALIDATION.md)
 
 > The dashboard is public, while Gemini/Parallel requests require the private studio
@@ -43,6 +44,7 @@ SceneReady keeps that work in one reviewable flow:
 | Provenance | Live stage timers, visible search queries, partial failures, source cards, and run mode |
 | Export | Complete JSON, Markdown, and browser-generated full-report PDF |
 | Session recovery | Completed reports and review edits restore locally without storing access codes or storyboard images |
+| Judge access | Public read-only, redacted sample from a recorded live run; no paid provider requests |
 | Operations | Privacy-safe JSON events for run IDs, stages, durations, counts, and redacted failures |
 | Hosting | FastAPI container on Google Cloud Run with Secret Manager-backed credentials |
 
@@ -137,6 +139,7 @@ commands. Never commit or record the Parallel key or studio access code.
 | Route | Purpose | Protection |
 |---|---|---|
 | `GET /` | Production desk | Public |
+| `GET /sample` | Redacted recorded-live report in read-only mode | Public; no paid calls |
 | `GET /healthz` | Container health | Public |
 | `GET /api/config` | Non-secret runtime flags | Public |
 | `POST /api/extract-document` | Gemini PDF extraction | Bearer studio code |
@@ -171,7 +174,7 @@ reminds crews to open sources and confirm applicability with the responsible aut
 
 ## Verification
 
-The complete suite passes **39 tests**, covering schema compatibility, API access,
+The complete suite passes **42 tests**, covering schema compatibility, API access,
 PDF limits and signatures, input validation, citation matching, fabricated quotation removal,
 duplicate handling, partial research failures, run isolation, review resets, storyboard
 sequencing, session-safety contracts, progress instrumentation and full-report printing. Successful
@@ -190,7 +193,7 @@ app/
   workflow.py     Fixed orchestration and streaming events
   schemas.py      Typed contracts and deterministic evidence validation
   prompts.py      Versioned, injection-aware agent prompts
-static/           Production desk UI and browser-side review/export logic
+static/           Production desk UI, redacted sample, and browser-side review/export logic
 scripts/          Setup, diagnostics, local launch, and Cloud Run deployment
 tests/            API, provider-schema, workflow, and validation regressions
 FEATURE_BACKLOG.md Evidence-based feature priorities and submission gate

@@ -1,0 +1,233 @@
+{
+  "schema_version": "2.0",
+  "run_id": "72511ad323f7",
+  "prompt_version": "sceneready-2.1.0",
+  "mode": "live",
+  "created_at": "2026-09-09T20:11:55.303350+00:00",
+  "elapsed_seconds": 14.19,
+  "brief": {
+    "title": "Recorded Heritage Exterior Demo",
+    "city": "Rajasthan, India (city redacted)",
+    "location": "Public heritage district (exact location redacted)",
+    "shoot_date": null,
+    "crew_size": 8,
+    "script": "[PUBLIC SAMPLE — ORIGINAL SCREENPLAY REDACTED] An adult photographer and adult guide cross a public heritage district at dusk. A small crew uses handheld equipment and battery-powered lighting. The recorded test included no drone, stunts, minors, animals, temporary structures, or road closure; permissions remained unconfirmed."
+  },
+  "breakdown": {
+    "summary": "Public-safe synopsis: two adult performers move through a heritage district at dusk while a small crew records the scene.",
+    "scenes": [
+      {
+        "id": "S01",
+        "heading": "EXT. PUBLIC HERITAGE DISTRICT — DUSK",
+        "setting": "exterior",
+        "time_of_day": "mixed",
+        "people": [
+          "travel photographer",
+          "adult local guide"
+        ],
+        "equipment": [
+          "handheld camera",
+          "gimbal",
+          "two battery-powered LED lights",
+          "reflectors",
+          "tripod"
+        ],
+        "production_needs": [
+          "Public pavement access without blocking pedestrians",
+          "Permission from relevant heritage, municipal, police, and property authorities"
+        ],
+        "script_excerpt": "[Original screenplay excerpt redacted] Two adult performers move through a public heritage district at dusk."
+      }
+    ],
+    "research_topics": [
+      "location_access"
+    ],
+    "missing_details": [
+      "Have heritage, municipal, police, and property permissions been secured for filming in front of the selected heritage landmark?",
+      "Are audio recording equipment or specific monitoring tools needed beyond the camera setup?",
+      "Will additional pedestrian or crowd control support be required on the public pavement during evening traffic?"
+    ]
+  },
+  "sources": [
+    {
+      "id": "E01",
+      "title": "Film Shooting Permission: Tourist Information Centre",
+      "url": "https://www.tourism.rajasthan.gov.in/content/rajasthan-tourism/en/about-rajasthan/film-shooting-permission.html",
+      "domain": "www.tourism.rajasthan.gov.in",
+      "government_domain": true,
+      "excerpts": [
+        "# Permissions for Film Shooting\n**Single Window Clearance System**\n**for film shooting Permissions  from  Police and Traffic/Municipal Corporation/State Protected Mnuments/District Collector**\nCommissioner Tourism shall act as a nodal agency for all departments of the State and single window clearance system shall be operated by him. Every person who intend to commence film shooting at any location, places, areas or sites for which Commissioner is authorized.\n* [Procedure](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/film-tourism/Resource/10.pdf)\n* [Required Documents](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/Check-List-FS-Online-Application.pdf)\n\n...\n\nHome > About Rajasthan > Film Shooting Permission\n**Permission for film shooting from Municipal corporation**\nThere is no requirement of applying separately to Municipal Corporation. District Collector shall obtain necessary clearance from respective municipal corporation as and when required.\n\n...\n\n* [Fees](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/Film-Shooting-charges.pdf)\n* [Procedure](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/Film-shooting/Work-Flow-Chart-State-Archeology-and-Museum-Dept..pdf)\n\n...\n\n* [CONDITIONS FOR MOVIE SHOOTING](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/Film-shooting-conditions.pdf)\n* [LIST OF STATE PROTECTED MONUMENTS](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/List-of-Protected-Monuments.pdf)\n\n...\n\n* Fees-Not applicable\n* [Procedure](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/Film-shooting/Work-Flow-Chart-District-Administration.pdf)\n* [User Manual](https://www.tourism.rajasthan.gov.in/content/dam/rajasthan-tourism/english/pdf/FS-User-Manual-Applicant.pdf)"
+      ],
+      "retrieved_at": "2026-09-09T20:11:46.677674+00:00",
+      "query": "[location redacted] film shooting permission official location authority"
+    },
+    {
+      "id": "E02",
+      "title": "The Rajasthan Film Shooting Regulations, 2012, India-legitquest",
+      "url": "https://www.legitquest.com/act/the-rajasthan-film-shooting-regulations-2012/FEB7",
+      "domain": "www.legitquest.com",
+      "government_domain": false,
+      "excerpts": [
+        "# Sections\n* section-icon1 Regulation - 1. Short title, extent and commencement.\n* section-icon1 Regulation - 2. Definitions.\n* section-icon1 Regulation - 3. Single Window clearance system for film shootings.\n* section-icon1 Regulation - 4.\nFormalities which are to be observed and pre-requisites which are to be fulfilled before the grant of permission.\n* section-icon1 Regulation - 5. Order granting permission for film shooting.\n* section-icon1 Regulation - 6.\nPermission granted by the Commissioner shall be binding on all departments of the State and the Local Authorities.\n* section-icon1 Regulation - 7. Repeal and Savings."
+      ],
+      "retrieved_at": "2026-09-09T20:11:46.677674+00:00",
+      "query": "[location redacted] film shooting permission official location authority"
+    },
+    {
+      "id": "E03",
+      "title": "Domestic Projects | India Cine Hub",
+      "url": "https://indiacinehub.gov.in/permission/step-by-step-guide/domestic-projects",
+      "domain": "indiacinehub.gov.in",
+      "government_domain": true,
+      "excerpts": [
+        "The permission letter issued by the Ministry of I&B, Government of India will facilitate your permission from other local authorities, which may, in some cases, need to be obtained directly from these authorities.\n\n...\n\n# Submit Application\nThe application will be sent to the respective State Nodal officer/s, whose details will also be sent to you. The State Nodal officer/s will get in touch with you regarding processing of application and payment of fees depending on your location.\n\n...\n\n## Upload Documents\nA list of equipment to be temporarily imported for filming in India.\n5. No Objection Letter - In case any living personality is portrayed in the film as a Character, we suggest that you share the script with that personality or his/her legal heirs, before applying for permission, and obtain a 'No Objection Letter'.\n\n...\n\nCo-Production - If you propose to shoot your film as an international co-production under the official treaty, a copy of the agreement between the foreign producer/production company and the Indian producer/production company indicating the role of each party, financial commitments, responsibilities and liabilities etc.,\n\n...\n\n- Production Directory\n- Filmic & Non-Filmic Resource\n+ Add a Resource\n+ Co-Production\n+ Filming Hubs\n+ Shooting Locations and Authorities\n* Made in India\n+ International Films\n+ Domestic Films\n+ Co-Produced Films\n+ Projects That Availed Incentives\n\n...\n\n# Domestic Projects\n## Permission Letter\n### Important Points to Remember\n#### Ecosystem Of Nodal Officers\nThe portal provides information on the assigned Nodal Officer for respective State/Union Territory along with its filming policies/guidelines, shooting locations and various filmic and non-filmic information of the respective region."
+      ],
+      "retrieved_at": "2026-09-09T20:11:46.677674+00:00",
+      "query": "[location redacted] film shooting permission official location authority"
+    }
+  ],
+  "tasks": [
+    {
+      "title": "Check Rajasthan single window film clearance portal requirements",
+      "scene_ids": [
+        "S01"
+      ],
+      "department": "Locations",
+      "priority": "high",
+      "action": "Check the Rajasthan Tourism Single Window Clearance System requirements, application lead time, and checklist for filming at or facing public monuments in the selected Rajasthan city.",
+      "rationale": "Rajasthan Tourism operates a single window clearance mechanism coordinating across departments for film permissions.",
+      "citations": [],
+      "needs_verification": "Verify whether an exterior shoot staged from a public pavement facing the selected heritage landmark requires state archaeology permission, local police/traffic notification, or municipal clearance.",
+      "id": "T01",
+      "evidence_status": "needs_evidence",
+      "review_status": "open",
+      "review_note": ""
+    },
+    {
+      "title": "Clarify municipal and local police coordination pathway",
+      "scene_ids": [
+        "S01"
+      ],
+      "department": "Production",
+      "priority": "high",
+      "action": "Ask local authorities whether municipal and traffic police clearances are handled via the District Collector / Tourism portal or require direct local precinct intimation.",
+      "rationale": "State tourism guidance notes that applicants need not apply separately to municipal corporations because clearances are coordinated via the administration.",
+      "citations": [
+        {
+          "source_id": "E01",
+          "quote": "There is no requirement of applying separately to Municipal Corporation. District Collector shall obtain necessary clearance",
+          "url": "https://www.tourism.rajasthan.gov.in/content/rajasthan-tourism/en/about-rajasthan/film-shooting-permission.html",
+          "title": "Film Shooting Permission: Tourist Information Centre"
+        }
+      ],
+      "needs_verification": "Confirm the current operational procedure in the selected Rajasthan city for 2026, including whether traffic police must be notified directly regarding pavement presence along the selected public square during peak evening hours.",
+      "id": "T02",
+      "evidence_status": "excerpt_matched",
+      "review_status": "open",
+      "review_note": ""
+    },
+    {
+      "title": "Assess India Cine Hub domestic versus state portal routing",
+      "scene_ids": [
+        "S01"
+      ],
+      "department": "Production",
+      "priority": "medium",
+      "action": "Review whether this project should route its filming permission through the central India Cine Hub portal or apply directly to Rajasthan Tourism.",
+      "rationale": "Central domestic project guidelines indicate state nodal officers process applications and local authorities may still need direct contact.",
+      "citations": [
+        {
+          "source_id": "E03",
+          "quote": "The application will be sent to the respective State Nodal officer/s, whose details will also be sent to you.",
+          "url": "https://indiacinehub.gov.in/permission/step-by-step-guide/domestic-projects",
+          "title": "Domestic Projects | India Cine Hub"
+        }
+      ],
+      "needs_verification": "Confirm whether the production qualifies as an Indian domestic project or foreign crew, and identify which single-window authority takes procedural precedence.",
+      "id": "T03",
+      "evidence_status": "excerpt_matched",
+      "review_status": "open",
+      "review_note": ""
+    },
+    {
+      "title": "Prepare pedestrian flow and traffic buffer plan",
+      "scene_ids": [
+        "S01"
+      ],
+      "department": "Safety",
+      "priority": "high",
+      "action": "Prepare a site safety plan establishing safe separation between the 8-person crew, pedestrian foot traffic on the pavement, and moving roadway traffic at the selected public square.",
+      "rationale": "Planning suggestion: Dusk on the selected public square involves heavy vehicular traffic and pedestrian congestion immediately adjacent to public sidewalks.",
+      "citations": [],
+      "needs_verification": "Verify sidewalk width opposite the selected heritage landmark and evaluate whether physical spotters or high-visibility vests are mandated by local traffic police.",
+      "id": "T04",
+      "evidence_status": "needs_evidence",
+      "review_status": "open",
+      "review_note": ""
+    },
+    {
+      "title": "Evaluate camera support footprint on public pavement",
+      "scene_ids": [
+        "S01"
+      ],
+      "department": "Camera",
+      "priority": "medium",
+      "action": "Prepare a mobile footprint plan minimizing stationary gear, evaluating whether the tripod should be replaced with handheld or gimbal operation if sidewalk space is restricted.",
+      "rationale": "Planning suggestion: Tripods and lighting stands create static obstruction hazards on busy urban sidewalks during evening rush hours.",
+      "citations": [],
+      "needs_verification": "Verify whether local public space regulations prohibit static ground support (tripods/light stands) without specific street obstruction permits.",
+      "id": "T05",
+      "evidence_status": "needs_evidence",
+      "review_status": "open",
+      "review_note": ""
+    }
+  ],
+  "questions": [
+    "Is the production company registered in India, or is any international co-production or foreign crew member involved?",
+    "What exact pavement section opposite the selected heritage landmark is planned (e.g., street-level pavement or elevated rooftop/cafe frontage)?",
+    "Will battery-powered LED lights and reflectors be mounted on stationary stands or hand-carried by crew members?",
+    "What is the expected start and wrap time for the dusk exterior shoot on the recorded test date?",
+    "Will sound be recorded live on location, requiring crowd/traffic noise management?",
+    "Has a local line producer or fixer in the selected Rajasthan city been engaged to interface with the the selected Rajasthan city Traffic Police and Municipal Corporation?"
+  ],
+  "warnings": [
+    "Task 1: a citation did not match retrieved evidence and was removed."
+  ],
+  "trace": [
+    {
+      "stage": "breakdown",
+      "seconds": 3.09
+    },
+    {
+      "stage": "research",
+      "seconds": 2.47,
+      "searches": [
+        {
+          "topic": "location_access",
+          "query": "[location redacted] film shooting permission official location authority",
+          "status": "success"
+        }
+      ]
+    },
+    {
+      "stage": "planning",
+      "seconds": 8.62
+    },
+    {
+      "stage": "validation",
+      "seconds": 0.001
+    }
+  ],
+  "notice": "Preliminary planning only. Matching an excerpt does not establish accuracy, currency, applicability, or permission to film.",
+  "sample": {
+    "label": "Recorded live sample — public redacted copy",
+    "recorded_at": "2026-09-09T20:11:55.303350+00:00",
+    "generation_disabled": true,
+    "redactions": [
+      "Original screenplay text",
+      "Exact filming location and city",
+      "Planned shoot date",
+      "Embedded storyboard image data"
+    ]
+  }
+}

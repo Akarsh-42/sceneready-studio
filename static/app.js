@@ -1,5 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
+const SAMPLE_MODE = location.pathname.replace(/\/$/, '') === '/sample';
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 let report = null, previous = null, activeTab = 'tasks', controller = null, reviewing = null;
 const SESSION_KEY = 'sceneready.session.v1';
@@ -23,7 +24,7 @@ function tags(task) {
 }
 function citationHTML(c) { return `<div class="citations">${safeLink(c.url,c.title)}<blockquote>“${esc(c.quote)}”</blockquote></div>`; }
 function taskCards(tasks) {
-  return tasks.map(t => `<article class="task-card"><div class="task-top">${tags(t)}<span class="task-id">${esc(t.id)}</span></div><h3>${esc(t.title)}</h3><p class="action">${esc(t.edited_action || t.action)}</p><p>${esc(t.rationale)}</p><details><summary>Evidence & verification</summary>${t.citations.length ? t.citations.map(citationHTML).join('') : '<p>No matching source excerpt supports this task. Treat it as a planning suggestion or an unresolved question.</p>'}<p><b>Verify:</b> ${esc(t.needs_verification)}</p>${t.edited_action ? '<p>The action was edited by a reviewer; source citations belong to the original generated task.</p>' : ''}</details>${t.review_note ? `<p><b>Review note:</b> ${esc(t.review_note)}</p>` : ''}<div class="task-bottom"><span>${esc(t.scene_ids.join(', ') || 'Production-wide')} · ${esc(t.owner || t.department)}</span><button class="secondary" data-review="${esc(t.id)}">${t.review_status === 'reviewed' ? 'Edit review' : 'Review & assign'} ↗</button></div></article>`).join('');
+  return tasks.map(t => `<article class="task-card"><div class="task-top">${tags(t)}<span class="task-id">${esc(t.id)}</span></div><h3>${esc(t.title)}</h3><p class="action">${esc(t.edited_action || t.action)}</p><p>${esc(t.rationale)}</p><details><summary>Evidence & verification</summary>${t.citations.length ? t.citations.map(citationHTML).join('') : '<p>No matching source excerpt supports this task. Treat it as a planning suggestion or an unresolved question.</p>'}<p><b>Verify:</b> ${esc(t.needs_verification)}</p>${t.edited_action ? '<p>The action was edited by a reviewer; source citations belong to the original generated task.</p>' : ''}</details>${t.review_note ? `<p><b>Review note:</b> ${esc(t.review_note)}</p>` : ''}<div class="task-bottom"><span>${esc(t.scene_ids.join(', ') || 'Production-wide')} · ${esc(t.owner || t.department)}</span><button class="secondary" data-review="${esc(t.id)}" ${SAMPLE_MODE ? 'disabled' : ''}>${t.review_status === 'reviewed' ? 'Edit review' : 'Review & assign'} ↗</button></div></article>`).join('');
 }
 function renderTasks() {
   const filter = $('task-filter').value;
@@ -214,7 +215,7 @@ $('brief-form').addEventListener('submit',async event=>{
 });
 $('cancel-button').addEventListener('click',()=>controller?.abort());
 $('report-content').addEventListener('click',event=>{
-  const button=event.target.closest('[data-review]');if(!button||!report)return;
+  const button=event.target.closest('[data-review]');if(!button||!report||SAMPLE_MODE)return;
   reviewing=report.tasks.find(t=>t.id===button.dataset.review);if(!reviewing)return;
   $('review-title').textContent=reviewing.title;$('review-action').value=reviewing.edited_action||reviewing.action;
   $('review-owner').value=reviewing.owner||reviewing.department;$('review-note').value=reviewing.review_note;
@@ -259,7 +260,24 @@ $('export-pdf').addEventListener('click',()=>{
   window.print();document.body.classList.remove('printing-full-report');$('print-report').innerHTML='';
 });
 $('clear-session').addEventListener('click',()=>{try{localStorage.removeItem(SESSION_KEY);}catch{}location.reload();});
+async function loadRecordedSample(){
+  const response=await fetch('/static/sample-report.json');
+  if(!response.ok)throw new Error('The recorded sample is unavailable.');
+  const sample=await response.json();
+  if(!validStoredReport(sample)||sample.mode!=='live'||!sample.sample?.generation_disabled)throw new Error('The recorded sample failed validation.');
+  report=sample;activeTab='tasks';
+  for(const [id,key] of [['title','title'],['city','city'],['location','location'],['date','shoot_date'],['script','script']])$(id).value=sample.brief[key]||'';
+  $('crew').value=sample.brief.crew_size;countCharacters();render();
+  STAGES.forEach(stage=>{const node=document.querySelector(`[data-stage="${stage}"]`);if(node){node.className='complete';node.querySelector('span').textContent='✓';const trace=report.trace.find(item=>item.stage===stage);node.querySelector('[data-stage-time]').textContent=trace?`${trace.seconds}s`:'done';}});
+  $('run-time').textContent=`Recorded run · ${report.elapsed_seconds}s`;
+  $('connection').textContent='Recorded live sample';
+  $('brief-fields').disabled=true;$('example-button').disabled=true;$('access-field').hidden=true;
+  $('mode-banner').hidden=false;
+  $('mode-banner').textContent=`RECORDED LIVE SAMPLE — generated ${new Date(report.sample.recorded_at).toLocaleString()}. Public copy redacts the original screenplay, exact location, shoot date, and storyboard images. Viewing makes no paid-provider request.`;
+  $('status').textContent='Recorded live report loaded. Inspect its scenes, actions, evidence, and run trace.';
+}
 async function initialize(){
+  if(SAMPLE_MODE){try{await loadRecordedSample();}catch(error){$('connection').textContent='Sample unavailable';$('status').textContent=error.message;}return;}
   try{const response=await fetch('/api/config');if(!response.ok)throw new Error();const config=await response.json();$('connection').textContent=config.demo?'Offline rehearsal':config.configured?'Live research configured':'Setup needed';$('access-field').hidden=!config.access_required;
     if(config.demo){$('mode-banner').hidden=false;$('mode-banner').textContent='OFFLINE REHEARSAL — interface practice only. No Gemini or Parallel calls are made; output is illustrative and has no external evidence.';}
     else if(!config.configured){$('mode-banner').hidden=false;$('mode-banner').textContent='Live credentials are not loaded. Start the app with scripts/run_local.py before running a plan.';}
@@ -269,7 +287,7 @@ async function initialize(){
 let storyboardBusy = false;
 function storyboardHTML(scene) {
   const board = (report.storyboards || {})[scene.id];
-  const disabled = storyboardBusy || report.mode !== 'live' || !scene.script_excerpt || controller;
+  const disabled = SAMPLE_MODE || storyboardBusy || report.mode !== 'live' || !scene.script_excerpt || controller;
   return `<section class="storyboard"><div class="storyboard-controls"><label>Frames
     <select data-shot-count="${esc(scene.id)}" ${disabled ? 'disabled' : ''}><option>2</option><option selected>3</option><option>4</option></select></label>
     <button class="secondary" data-storyboard="${esc(scene.id)}" ${disabled || board ? 'disabled' : ''}>🎬 Generate Storyboard</button></div>
@@ -329,5 +347,5 @@ $('report-content').addEventListener('click', async event => {
     refresh();
   }
 });
-restoreSession();
+if(!SAMPLE_MODE)restoreSession();
 initialize();

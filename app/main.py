@@ -73,6 +73,12 @@ async def index():
     return FileResponse(ROOT / "static" / "index.html")
 
 
+@app.get("/sample")
+async def recorded_sample():
+    """Serve the read-only recorded sample shell without invoking paid providers."""
+    return FileResponse(ROOT / "static" / "index.html")
+
+
 @app.get("/api/config")
 async def config():
     demo = os.environ.get("SCENEREADY_DEMO") == "1"

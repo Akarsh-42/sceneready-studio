@@ -41,11 +41,11 @@ restored data and provides a clear button.
 Python tests, frontend syntax, shell/Python compilation and dependency audit on pushes and
 pull requests.
 
-### T5. Public recorded sample `planned`
+### T5. Public recorded sample `shipped`
 
-Read-only `/sample` experience using an anonymized JSON export from a real live run. It must
-show the recording date and must not call paid endpoints. Blocked until the team selects and
-redacts a real exported report; illustrative data must not be presented as live evidence.
+Read-only `/sample` experience using a redacted export from a real live run. It shows the
+recording date, disables reviews and storyboards, and makes no paid endpoint calls. The
+screenplay, exact location/city, shoot date, and embedded image data are removed or generalized.
 
 ### T6. Mobile validation pass `planned`
 

@@ -10,7 +10,7 @@ human or production validation.
 - Cloud Run service `sceneready-studio` is deployed in `us-central1` and serves the public UI.
 - A deployed revision completed live planning and storyboard generation; the new demo-readiness
   changes in this commit still require redeployment and a fresh-browser check.
-- GitHub Actions passed the updated **39-test** suite, JavaScript and shell syntax checks, Python compilation, and dependency audit.
+- GitHub Actions passed the previous **39-test** suite; the redacted-sample commit adds three regression tests.
 - `scripts/check.py` passed agent constructors, model configuration, Parallel import, and API routes.
 - Multiple `LIVE` workflows completed all four stages against real Gemini and Parallel services.
 - A protected PDF screenplay was extracted with Gemini and used in a completed planning run.
@@ -19,6 +19,8 @@ human or production validation.
 - Task review, ownership, notes, evidence inspection, JSON export, Markdown export, and review
   resets on rerun were exercised in the browser.
 - A live scene storyboard produced two structured, visually continuous generated frames.
+- The public sample derives from live run `72511ad323f7`, generated 2026-09-09. Its
+  screenplay, exact location/city, shoot date, and embedded storyboard images are redacted.
 
 ## Regression coverage
 
@@ -40,7 +42,8 @@ The test suite covers:
 - static contracts for four stage timers, browser restore secret exclusions, clear controls and
   full-report browser printing;
 - structured log events retain approved operational metadata while dropping scripts, search
-  queries, access codes and provider bodies.
+  queries, access codes and provider bodies;
+- recorded-sample schema, redaction markers, forbidden-field absence, and read-only routing.
 
 ## Static and build checks
 
@@ -94,7 +97,7 @@ Timings and model outputs vary. These observations are not a latency guarantee o
 - Run one clean, internally consistent PDF example on the deployed URL.
 - Open every source shown in the recorded demo and confirm its current relevance.
 - Verify missing and incorrect studio codes cannot call either protected endpoint.
-- Test the final deployed revision on desktop and mobile widths.
+- Test the final deployed revision on a real phone, including the public `/sample` route.
 - Exercise refresh restore, Clear saved work, and Print / Save PDF after the final deployment.
 - Confirm repository visibility, license, and teammate access from a signed-out browser.
 - Record a public English demo of no more than three minutes.
